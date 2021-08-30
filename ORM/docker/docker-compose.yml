@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  db:
+    image: postgres
+    restart: always
+    container_name: orm_postgres
+    environment:
+      POSTGRES_PASSWORD: 'orm_password'
+      POSTGRES_USER: 'orm_user'
+      POSTGRES_DB: 'orm'
+    ports:
+      - '5432:5432'
+    volumes:
+      - "orm_db:/var/lib/postgresql/data"
+    #  - "./db/script.sql:/docker-entrypoint-initdb.d/1.sql"
+
+volumes:
+  orm_db:

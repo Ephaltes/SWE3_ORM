@@ -1,0 +1,3 @@
+docker stop orm_postgres
+docker container rm orm_postgres
+docker volume rm docker_orm_db
