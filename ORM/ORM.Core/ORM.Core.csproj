@@ -16,12 +16,4 @@
         <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Interfaces" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\ORM.PostgresSQL\ORM.PostgresSQL.csproj" />
-    </ItemGroup>
-
 </Project>
