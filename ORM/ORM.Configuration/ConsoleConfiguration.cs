@@ -8,8 +8,9 @@ namespace ORM.Configuration
         public ServiceProvider Setup()
         {
             ServiceCollection services = new();
-            services.AddSingleton<DbContextOrm>();
+            //services.AddSingleton<DbContextOrm>();
 
+            
             return services.BuildServiceProvider();
         }
     }

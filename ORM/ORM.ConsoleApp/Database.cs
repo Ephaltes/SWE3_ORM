@@ -1,13 +1,10 @@
-﻿using ORM.Core;
+﻿using ORM.ConsoleApp.Entities;
+using ORM.Core;
 
 namespace ORM.ConsoleApp
 {
-    public class Database : DbContextOrm
+    public class Database : DbContext
     {
-        public DbSetOrm<Product> Product { get; set; }
-
-        public void hello()
-        {
-        }
+              
     }
 }

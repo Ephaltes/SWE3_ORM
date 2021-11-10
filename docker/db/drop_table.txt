@@ -1,0 +1,5 @@
+drop table r_courses_students;
+drop table courses;
+drop table students;
+drop table classes;
+drop table teachers;
