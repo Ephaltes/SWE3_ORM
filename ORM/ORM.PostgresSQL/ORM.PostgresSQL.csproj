@@ -8,10 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Npgsql" Version="6.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\ORM.Core\ORM.Core.csproj" />
+      <PackageReference Include="System.Data.OleDb" Version="6.0.0" />
     </ItemGroup>
 
 </Project>

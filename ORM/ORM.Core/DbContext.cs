@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using ORM.Core.Interfaces;
+using ORM.PostgresSQL.Interface;
 
 namespace ORM.Core
 {
