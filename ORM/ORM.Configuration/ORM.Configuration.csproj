@@ -12,7 +12,6 @@
     <ItemGroup>
         <ProjectReference Include="..\ORM.Core.Test\ORM.Core.Test.csproj" />
         <ProjectReference Include="..\ORM.Core\ORM.Core.csproj" />
-        <ProjectReference Include="..\ORM.Helpers\ORM.Helpers.csproj" />
         <ProjectReference Include="..\ORM.PostgresSQL\ORM.PostgresSQL.csproj" />
     </ItemGroup>
 

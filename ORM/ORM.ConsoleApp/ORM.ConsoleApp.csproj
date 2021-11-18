@@ -9,7 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\ORM.Configuration\ORM.Configuration.csproj" />
         <ProjectReference Include="..\ORM.Core\ORM.Core.csproj" />
-        <ProjectReference Include="..\ORM.PostgresWrapper\ORM.PostgresWrapper.csproj" />
+        <ProjectReference Include="..\ORM.PostgresSQL\ORM.PostgresSQL.csproj" />
     </ItemGroup>
 
 </Project>
