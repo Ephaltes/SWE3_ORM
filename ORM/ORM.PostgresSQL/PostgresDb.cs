@@ -176,22 +176,14 @@ namespace ORM.PostgresSQL
 
                 if (curr.Value != null)
                 {
-                    if (curr.Value is DateTime )
+                    values += curr.Value switch
                     {
-                        values += "'" + PostgresSqlProvider.DbTimestamp((DateTime)curr.Value) + "'";
-                    }
-                    else if (curr.Value is TimeSpan )
-                    {
-                        values += "'" + (TimeSpan)curr.Value + "'";
-                    }
-                    else if (curr.Value is int or long or decimal)
-                    {
-                        values += curr.Value.ToString();
-                    }
-                    else
-                    {
-                            values += curr.Value.ToString();
-                    }
+                        DateTime time => "'" + PostgresSqlProvider.DbTimestamp(time) + "'",
+                        TimeSpan span => "'" + span + "'",
+                        int or long or decimal => curr.Value.ToString(),
+                        Enum => (int)curr.Value,
+                        _ => $"'{curr.Value}'"
+                    };
                 }
                 else
                 {
@@ -259,23 +251,14 @@ namespace ORM.PostgresSQL
 
                     if (currKvp.Value != null)
                     {
-                        if (currKvp.Value is DateTime )
+                        vals += currKvp.Value switch
                         {
-                            vals += "'" + PostgresSqlProvider.DbTimestamp((DateTime)currKvp.Value) + "'";
-                        }
-                        else if (currKvp.Value is TimeSpan )
-                        {
-                            vals += "'" + (DateTimeOffset)currKvp.Value + "'";
-                        }
-                        else if (currKvp.Value is int or long or decimal)
-                        {
-                            vals += currKvp.Value.ToString();
-                        }
-                        else
-                        {
-                                vals += currKvp.Value.ToString();
-                        }
-
+                            DateTime time => "'" + PostgresSqlProvider.DbTimestamp(time) + "'",
+                            TimeSpan span => "'" + span + "'",
+                            int or long or decimal => currKvp.Value.ToString(),
+                            Enum => (int)currKvp.Value,
+                            _ => $"'{currKvp.Value}'"
+                        };
                     }
                     else
                     {
@@ -315,22 +298,14 @@ namespace ORM.PostgresSQL
                  
                 if (curr.Value != null)
                 {
-                    if (curr.Value is DateTime )
+                    keyValueClause += curr.Value switch
                     {
-                        keyValueClause += (curr.Key) + "='" + PostgresSqlProvider.DbTimestamp((DateTime)curr.Value) + "'";
-                    }
-                    else if (curr.Value is TimeSpan)
-                    {
-                        keyValueClause += (curr.Key) + "='" + (TimeSpan)curr.Value + "'";
-                    }
-                    else if (curr.Value is int or long or decimal)
-                    {
-                        keyValueClause += (curr.Key) + "=" + curr.Value;
-                    }
-                    else
-                    {
-                            keyValueClause += (curr.Key) + "=" + curr.Value;
-                    }
+                        DateTime time => (curr.Key) + "='" + PostgresSqlProvider.DbTimestamp(time) + "'",
+                        TimeSpan span => (curr.Key) + "='" + span + "'",
+                        int or long or decimal => (curr.Key) + "=" + curr.Value,
+                        Enum => $"{curr.Key} = {(int)curr.Value}" ,
+                        _ => $"{curr.Key} = '{curr.Value}'"
+                    };
                 }
                 else
                 {

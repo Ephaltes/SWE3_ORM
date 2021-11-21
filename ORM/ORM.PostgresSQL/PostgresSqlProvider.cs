@@ -6,7 +6,7 @@ namespace ORM.PostgresSQL
 {
     public static class PostgresSqlProvider
     {
-        internal static string TimestampFormat = "MM/dd/yyyy hh:mm:ss.fffffff tt";
+        internal static string TimestampFormat = "yyyy-MM-dd hh:mm:ss";
         public static string LoadTableNamesQuery()
         {
             return

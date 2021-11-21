@@ -10,7 +10,7 @@ namespace ORM.Core.Models
     {
         public List<ColumnModel> Columns { get; set; }
         public List<ColumnModel> ForeignKeys { get; set; }
-        public ColumnModel PrimaryKeys => GetPrimaryKey();
+        public ColumnModel PrimaryKey => GetPrimaryKey();
 
 
         public string Name { get; set; }
@@ -37,6 +37,11 @@ namespace ORM.Core.Models
         private ColumnModel GetPrimaryKey()
         {
             return Columns.Single(x => x.PrimaryKey);
+        }
+        public string? GetPropertyNameFromColumnName(string columnName)
+        {
+            return Columns.FirstOrDefault(x => string.Equals(x.ColumnName, columnName,StringComparison.InvariantCultureIgnoreCase))
+                ?.PropertyName;
         }
     }
 }
