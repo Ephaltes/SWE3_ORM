@@ -1,54 +1,93 @@
 ﻿using ORM.ConsoleApp.Entities;
+using ORM.Core;
 using ORM.Core.Models;
 
 namespace ORM.ConsoleApp
 {
-    public static class Examples
+    public class Examples
     {
-        public static void DisplayTables()
+        private readonly DbContext _dbContext;
+        public Examples(DbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+        public void DisplayTables()
         {
             TableModel table = new TableModel(typeof(Students));
         }
 
-        public static void InsertObject()
+        public void InsertObject()
         {
-            
-        }
-        
-        public static void UpdateObject()
-        {
-            
+            Teachers t = new Teachers
+            {
+                Firstname = "Lisi",
+                Name = "Mouse",
+                Gender = Gender.Female,
+                BirthDate = new DateTime(1970, 8, 18),
+                HireDate = new DateTime(2015, 6, 20),
+                Salary = 50000
+            };
+
+
+            Teachers t1 = _dbContext.Add(t);
+
+            Console.WriteLine($"Id: {t1.Id}, Salary: {t1.Salary}, Firstname: {t1.Firstname}, Name: {t1.Name}");
         }
 
-        public static void ShowEntityWithFk()
+        public void UpdateObject()
         {
-            
+            Teachers t = new Teachers
+            {
+                Firstname = "Lisi",
+                Id = 1,
+                Name = "Mouse",
+                Gender = Gender.Female,
+                BirthDate = new DateTime(1970, 8, 18),
+                HireDate = new DateTime(2015, 6, 20),
+                Salary = 70000
+            };
+
+            Teachers t1 = _dbContext.Update(t);
+
+            Console.WriteLine($"Id: {t1.Id}, Salary: {t1.Salary}, Firstname: {t1.Firstname}, Name: {t1.Name}");
         }
 
-        public static void ShowEntityWithFkList()
+        public void ShowEntityWithFk()
         {
+            Teachers teacher = _dbContext.Get<Teachers>(1);
+
+            Classes classes = new Classes
+            {
+                Name = "Math",
+                Teacher = teacher
+            };
+
+            _dbContext.Add(classes);
+
+            var classes1 = _dbContext.Get<Classes>(1);
             
+            Console.WriteLine($"Id: {classes1.Id}, Name: {classes1.Name}, Teacher: {classes1.Teacher.Firstname}");
+
         }
 
-        public static void ShowEntityWithManyToManyRelation()
+        public void ShowEntityWithFkList()
         {
-            
         }
 
-        public static void ShowLazyList()
+        public void ShowEntityWithManyToManyRelation()
         {
-            
         }
 
-        public static void ShowCaching()
+        public void ShowLazyList()
         {
-            
         }
 
-        public static void ShowQuery()
+        public void ShowCaching()
         {
-            
         }
-        
+
+        public void ShowQuery()
+        {
+        }
     }
 }

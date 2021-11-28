@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using ORM.Core.Attributes;
+﻿using ORM.Core.Attributes;
 
 namespace ORM.ConsoleApp.Entities
 {

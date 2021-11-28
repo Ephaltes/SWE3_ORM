@@ -23,8 +23,9 @@ namespace ORM.Core.Models
 
         public string ForeignKeyColumnName { get; set; }
 
+        //List<object>
         public bool IsReferenced { get; set; }
-
+        
         public bool IsManyToMany { get; set; }
 
         public string DbType { get; set; }
@@ -91,6 +92,22 @@ namespace ORM.Core.Models
             PropertyInfo? propertyInfo = obj.GetType().GetProperty(PropertyName);
 
             return propertyInfo?.GetValue(obj);
+        }
+        
+        public void SetValue(object obj, object value)
+        {
+            PropertyInfo? propertyInfo = obj.GetType().GetProperty(PropertyName);
+
+            propertyInfo?.SetValue(obj, value);
+        }
+        public object ConvertToType(object value)
+        {
+            if(Type == typeof(bool)) return Convert.ToBoolean(value);
+            if(Type == typeof(int))  return Convert.ToInt32(value); 
+            if(Type == typeof(long))  return Convert.ToInt64(value);
+            if (Type == typeof(double)) return Convert.ToDouble(value);
+
+            return Type.IsEnum ? Enum.ToObject(Type, value) : value;
         }
     }
 }

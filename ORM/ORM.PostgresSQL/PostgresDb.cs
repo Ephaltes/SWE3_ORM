@@ -138,7 +138,7 @@ namespace ORM.PostgresSQL
 
             return columnNames;
         }
-        public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string> returnFields,
+        public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
@@ -395,6 +395,6 @@ namespace ORM.PostgresSQL
                 return Convert.ToDecimal(result.Rows[0][_sumColumnName]);
             }
             return 0m;
-        } 
+        }
     }
 }

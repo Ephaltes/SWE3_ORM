@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using ORM.Core.Attributes;
+﻿using ORM.Core.Attributes;
 
 namespace ORM.ConsoleApp.Entities
 {
     public class Teachers : Persons
     {
-        public DateTime HDate { get; set; }
+        public DateTime HireDate { get; set; }
         public int Salary { get; set; }
 
         [ForeignKey("teachersid")]

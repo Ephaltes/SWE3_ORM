@@ -110,7 +110,7 @@ namespace ORM.PostgresSQL
 
             return query;
         }
-        public static string SelectQuery(string tableName, int? indexStart, int? maxResults, List<string> returnFields,
+        public static string SelectQuery(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter, DatabaseResultOrder[] resultOrder)
         {
             string query = "";
@@ -120,7 +120,7 @@ namespace ORM.PostgresSQL
             query += "SELECT ";
 
             // fields 
-            if (returnFields == null || returnFields.Count < 1)
+            if (returnFields is null || returnFields.Count < 1)
             {
                 query += "* ";
             }
@@ -130,12 +130,12 @@ namespace ORM.PostgresSQL
                 foreach (string curr in returnFields)
                     if (fieldsAdded == 0)
                     {
-                        query += "\"" + curr + "\"";
+                        query += curr;
                         fieldsAdded++;
                     }
                     else
                     {
-                        query += ",\"" + curr + "\"";
+                        query += $",{curr}";
                         fieldsAdded++;
                     }
             }

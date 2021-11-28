@@ -21,7 +21,7 @@ namespace ORM.PostgresSQL.Interface
 
         public List<string> GetColumnNames(string tableName);
 
-        public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string> returnFields,
+        public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter);
 
         public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string> returnFields,
