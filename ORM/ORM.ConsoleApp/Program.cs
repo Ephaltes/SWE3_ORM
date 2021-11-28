@@ -1,6 +1,5 @@
 ﻿using System;
 using ORM.Core;
-using ORM.Core.Converter;
 using ORM.PostgresSQL;
 using ORM.PostgresSQL.Interface;
 
@@ -14,9 +13,8 @@ namespace ORM.ConsoleApp
                 new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;",
                     "orm");
 
-            ITableConverter tableConverter = new PostgresTableConverter();
             
-            var dbContext = new DbContext(db,tableConverter);
+            var dbContext = new DbContext(db);
             
             Examples example = new Examples(dbContext);
             

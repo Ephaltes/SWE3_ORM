@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Data;
-using ORM.Core.Converter;
+using ORM.Cache;
 using ORM.Core.Models;
 using ORM.PostgresSQL.Interface;
 using ORM.PostgresSQL.Model;
@@ -9,14 +9,13 @@ namespace ORM.Core
 {
     public class DbContext
     {
-        private readonly ITableConverter _converter;
-        private readonly IDatabaseWrapper db;
+        private readonly IDatabaseWrapper _db;
+        private readonly ICache _cache;
 
-        public DbContext(IDatabaseWrapper db,
-            ITableConverter converter)
+        public DbContext(IDatabaseWrapper db, ICache cache = null)
         {
-            this.db = db;
-            _converter = converter;
+            _db = db;
+            _cache = cache;
         }
 
         public T Add<T>(T entity) where T : class, new()
@@ -39,9 +38,9 @@ namespace ORM.Core
             if (table.PrimaryKey.IsAutoIncrement)
                 columnValues.Remove(table.PrimaryKey.ColumnName);
 
-            DataTable result = db.Insert(table.Name, columnValues);
-
-            return _converter.DataTableToObject<T>(result);
+            DataTable result = _db.Insert(table.Name, columnValues);
+            
+            return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
 
         public T Update<T>(T entity) where T : class, new()
@@ -54,9 +53,9 @@ namespace ORM.Core
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 table.PrimaryKey.GetValue(entity));
 
-            DataTable result = db.Update(table.Name, columnValues, expression);
-
-            return _converter.DataTableToObject<T>(result);
+            DataTable result = _db.Update(table.Name, columnValues, expression);
+            
+            return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
 
         public T Get<T>(object id) where T : class, new()
@@ -66,9 +65,9 @@ namespace ORM.Core
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
-            DataTable result = db.Select(table.Name, null, null, null, expression);
+            DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return (T)CreateObject(typeof(T), result);
+            return (T)CreateObject(typeof(T), result.Rows[0]);
         }
 
         internal object? Get(object id, Type type)
@@ -78,12 +77,12 @@ namespace ORM.Core
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
-            DataTable result = db.Select(table.Name, null, null, null, expression);
+            DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return CreateObject(type, result);
+            return CreateObject(type, result.Rows[0]);
         }
 
-        private object? CreateObject(Type type, DataTable mainResult)
+        private object? CreateObject(Type type, DataRow row)
         {
             TableModel table = new TableModel(type);
             object? instance = Activator.CreateInstance(type);
@@ -92,21 +91,13 @@ namespace ORM.Core
                 return null;
 
             foreach (ColumnModel column in table.Columns)
-                column.SetValue(instance, column.ConvertToType(mainResult.Rows[0][column.ColumnName]));
+                column.SetValue(instance, column.ConvertToType(row[column.ColumnName]));
 
             foreach (ColumnModel foreignKeyColumn in table.ForeignKeys)
             {
                 if (foreignKeyColumn.IsReferenced)
                 {
-                    TableModel referencedTable = new TableModel(foreignKeyColumn.Type.GenericTypeArguments.First());
-                    
-                    CustomExpression expression = new CustomExpression(foreignKeyColumn.ForeignKeyColumnName,
-                        CustomOperations.Equals,
-                        mainResult.Rows[0][foreignKeyColumn.ParentTable.PrimaryKey.ColumnName]);
-
-                    DataTable dataTable = db.Select(referencedTable.Name, null, null, null, expression);
-
-                    IList list = GetList(foreignKeyColumn.Type, dataTable);
+                    IList list = GetList(foreignKeyColumn, row);
 
                     foreignKeyColumn.SetValue(instance, list);
                 }
@@ -118,8 +109,8 @@ namespace ORM.Core
                 }
                 else
                 {
-                    object? foreignKeyObject = Get(mainResult.Rows[0][foreignKeyColumn.ForeignKeyColumnName],
-                        foreignKeyColumn.Type);
+                    object foreignKeyValue = row[foreignKeyColumn.ForeignKeyColumnName];
+                    object? foreignKeyObject = Get(foreignKeyValue,foreignKeyColumn.Type);
 
                     foreignKeyColumn.SetValue(instance, foreignKeyObject);
                 }
@@ -128,29 +119,34 @@ namespace ORM.Core
             return instance;
         }
 
-        private IList GetList(Type t, DataTable result)
+        private IList GetList(ColumnModel column, DataRow dataRow)
         {
-            TableModel table = new TableModel(t.GenericTypeArguments.First()); //Table of Type T
-            IList listInstance =(IList) Activator.CreateInstance(t);
-
-            if (listInstance is null)
-                return null;
-
-            foreach (DataRow row in result.Rows)
-            {
-                object? instance = Activator.CreateInstance(t.GenericTypeArguments.First()); //Creates instance of T
-                foreach (ColumnModel column in table.Columns)
-                    column.SetValue(instance, column.ConvertToType(row[column.ColumnName]));
-
-                foreach (var foreignKeyColumn in table.ForeignKeys)
-                {
+            TableModel referencedTable = new TableModel(column.Type.GenericTypeArguments.First());
+            IList list = (IList) Activator.CreateInstance(column.Type);
                     
-                }
-                
-                listInstance.Add(instance);
-            }
+            CustomExpression expression = new CustomExpression(column.ForeignKeyColumnName,
+                CustomOperations.Equals,
+                dataRow[column.ParentTable.PrimaryKey.ColumnName]);
 
-            return listInstance;
+            DataTable dataTable = _db.Select(referencedTable.Name, null, null, null, expression);
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row));
+            }
+            
+            return list;
         }
+        
+        public void Delete<T>(object id) where T : class, new()
+        {
+            TableModel table = new TableModel(typeof(T));
+
+            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+                id);
+
+            _db.Delete(table.Name, expression);
+        }
+        
     }
 }
