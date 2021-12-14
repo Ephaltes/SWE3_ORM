@@ -10,7 +10,8 @@ namespace ORM.ConsoleApp.Entities
         public string Name { get; set; }
         [ForeignKey("teachersid")]
         public Teachers Teacher { get; set; }
-        [ManyToMany("r_courses_students", "coursesid", "studentsid")]
-        public List<Students> Students { get; set; }
+
+        [ManyToMany("r_students_courses", "coursesid", "studentsid")]
+        public List<Students> Students { get; set; } = new List<Students>();
     }
 }

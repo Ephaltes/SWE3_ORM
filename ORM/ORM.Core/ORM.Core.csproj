@@ -17,7 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ORM.Cache\ORM.Cache.csproj" />
       <ProjectReference Include="..\ORM.PostgresSQL\ORM.PostgresSQL.csproj" />
     </ItemGroup>
 

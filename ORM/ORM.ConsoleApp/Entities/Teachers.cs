@@ -7,9 +7,10 @@ namespace ORM.ConsoleApp.Entities
         public DateTime HireDate { get; set; }
         public int Salary { get; set; }
 
-        [ForeignKey("teachersid")]
-        public List<Classes> Classes { get; set; }
-        [ForeignKey("teachersid")]
-        public List<Courses> Courses { get; set; }
+        [ForeignKey("teachersid")] 
+        public List<Classes> Classes { get; set; } = new List<Classes>();
+
+        [ForeignKey("teachersid")] 
+        public List<Courses> Courses { get; set; } = new List<Courses>();
     }
 }

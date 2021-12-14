@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using ORM.Core.Interfaces;
 
 namespace ORM.Cache
 {
@@ -10,10 +11,9 @@ namespace ORM.Cache
         private readonly Dictionary<Type, Dictionary<int, object>> _cache =
             new Dictionary<Type, Dictionary<int, object>>();
 
-        public void Add(object entity)
+        public void Add(object entity, int id)
         {
             Type type = entity.GetType();
-            int id = GetId(entity);
             if (!_cache.ContainsKey(type))
                 _cache.Add(type, new Dictionary<int, object>());
             _cache[type].Add(id, entity);
@@ -38,9 +38,12 @@ namespace ORM.Cache
             _cache.Remove(type);
         }
 
-        public object Get(Type type, int id)
+        public object? Get(Type type, int id)
         {
-            return _cache.ContainsKey(type) ? _cache[type][id] : null;
+            if (!_cache.ContainsKey(type))
+                return null;
+            
+            return _cache[type].ContainsKey(id) ? _cache[type][id] : null;
         }
 
         public IEnumerable<object> GetAll(Type type)

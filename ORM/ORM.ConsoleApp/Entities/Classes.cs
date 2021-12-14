@@ -10,7 +10,8 @@ namespace ORM.ConsoleApp.Entities
         public string Name { get; set; }
         [ForeignKey("teachersid")]
         public Teachers Teacher { get; set; }
-        [ForeignKey("classesid")]
-        public List<Students> Students { get; set; }
+
+        [ForeignKey("classesid")] 
+        public List<Students> Students { get; set; } = new List<Students>();
     }
 }

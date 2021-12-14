@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Data;
-using ORM.Cache;
+using ORM.Core.Interfaces;
 using ORM.Core.Models;
 using ORM.PostgresSQL.Interface;
 using ORM.PostgresSQL.Model;
@@ -9,10 +9,10 @@ namespace ORM.Core
 {
     public class DbContext
     {
-        private readonly IDatabaseWrapper _db;
         private readonly ICache _cache;
+        private readonly IDatabaseWrapper _db;
 
-        public DbContext(IDatabaseWrapper db, ICache cache = null)
+        public DbContext(IDatabaseWrapper db, ICache cache)
         {
             _db = db;
             _cache = cache;
@@ -25,21 +25,42 @@ namespace ORM.Core
             Dictionary<string, object> columnValues =
                 columns.ToDictionary(column => column.ColumnName, column => column.GetValue(entity));
 
-            if (table.ForeignKeys.Count > 0)
-                foreach (ColumnModel foreignKey in table.ForeignKeys
-                             .Where(x=> x.IsManyToMany == false && x.IsReferenced == false))
-                {
-                    dynamic? value = foreignKey.GetValue(entity);
-                    if (value is not null && value.GetType() == foreignKey.Type)
-                        columnValues.Add(foreignKey.ForeignKeyColumnName, value.Id);
-                }
-            //TODO: add many to many
+
+            foreach (ColumnModel foreignKey in table.ForeignKeys
+                         .Where(x => x.IsManyToMany == false && x.IsReferenced == false))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+                if (value is not null && value.GetType() == foreignKey.Type)
+                    columnValues.Add(foreignKey.ForeignKeyColumnName, value.Id);
+            }
+
 
             if (table.PrimaryKey.IsAutoIncrement)
                 columnValues.Remove(table.PrimaryKey.ColumnName);
 
             DataTable result = _db.Insert(table.Name, columnValues);
-            
+
+            T insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
+
+
+            foreach (ColumnModel foreignKey in table.ForeignKeys
+                         .Where(x => x.IsManyToMany))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+
+                if (value is null || value.Count <= 0 || value.GetType() != foreignKey.Type)
+                    continue;
+
+                foreach(var item in value)
+                {
+                    _db.Insert(foreignKey.ForeignKeyTableName, new Dictionary<string, object>
+                    {
+                        {foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity)},
+                        {foreignKey.ForeignKeyColumnName, item.Id}
+                    });
+                }
+            }
+
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
 
@@ -54,7 +75,7 @@ namespace ORM.Core
                 table.PrimaryKey.GetValue(entity));
 
             DataTable result = _db.Update(table.Name, columnValues, expression);
-            
+
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
 
@@ -70,9 +91,17 @@ namespace ORM.Core
             return (T)CreateObject(typeof(T), result.Rows[0]);
         }
 
-        internal object? Get(object id, Type type)
+        internal object? Get(object? id, Type type)
         {
+            if (id is null or DBNull)
+                return null;
+
             TableModel table = new TableModel(type);
+
+            object? retVal = _cache.Get(type, Convert.ToInt32(id));
+
+            if (retVal is not null)
+                return retVal;
 
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
@@ -85,10 +114,13 @@ namespace ORM.Core
         private object? CreateObject(Type type, DataRow row)
         {
             TableModel table = new TableModel(type);
-            object? instance = Activator.CreateInstance(type);
+            object? instance = _cache.Get(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
 
             if (instance is null)
-                return null;
+            {
+                instance = Activator.CreateInstance(type);
+                _cache.Add(instance, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+            }
 
             foreach (ColumnModel column in table.Columns)
                 column.SetValue(instance, column.ConvertToType(row[column.ColumnName]));
@@ -97,23 +129,27 @@ namespace ORM.Core
             {
                 if (foreignKeyColumn.IsReferenced)
                 {
+                    // 1 : n foreign key
                     IList list = GetList(foreignKeyColumn, row);
 
                     foreignKeyColumn.SetValue(instance, list);
+
+                    continue;
                 }
 
                 if (foreignKeyColumn.IsManyToMany)
                 {
-                    int x = 0;
-                    foreignKeyColumn.SetValue(instance, null);
-                }
-                else
-                {
-                    object foreignKeyValue = row[foreignKeyColumn.ForeignKeyColumnName];
-                    object? foreignKeyObject = Get(foreignKeyValue,foreignKeyColumn.Type);
+                    IList list = GetList(foreignKeyColumn, row);
+                    foreignKeyColumn.SetValue(instance, list);
 
-                    foreignKeyColumn.SetValue(instance, foreignKeyObject);
+                    continue;
                 }
+
+                //1 : 1 foreign Key
+                object foreignKeyValue = row[foreignKeyColumn.ForeignKeyColumnName];
+                object? foreignKeyObject = Get(foreignKeyValue, foreignKeyColumn.Type);
+
+                foreignKeyColumn.SetValue(instance, foreignKeyObject);
             }
 
             return instance;
@@ -121,23 +157,39 @@ namespace ORM.Core
 
         private IList GetList(ColumnModel column, DataRow dataRow)
         {
-            TableModel referencedTable = new TableModel(column.Type.GenericTypeArguments.First());
-            IList list = (IList) Activator.CreateInstance(column.Type);
-                    
-            CustomExpression expression = new CustomExpression(column.ForeignKeyColumnName,
-                CustomOperations.Equals,
-                dataRow[column.ParentTable.PrimaryKey.ColumnName]);
+            Type tableType = column.Type.GenericTypeArguments.First();
+            TableModel referencedTable = new TableModel(tableType);
+            IList list = (IList)Activator.CreateInstance(column.Type);
 
-            DataTable dataTable = _db.Select(referencedTable.Name, null, null, null, expression);
-
-            foreach (DataRow row in dataTable.Rows)
+            if (column.IsManyToMany)
             {
-                list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row));
+                CustomExpression expression = new CustomExpression(column.ColumnName,
+                    CustomOperations.Equals,
+                    dataRow[column.ParentTable.PrimaryKey.ColumnName]);
+
+                DataTable result = _db.Select(column.ForeignKeyTableName, null, null, null, expression);
+
+                foreach (DataRow row in result.Rows)
+                {
+                    object? instance = Get(row[column.ForeignKeyColumnName], tableType);
+                    list.Add(instance);
+                }
             }
-            
+            else
+            {
+                CustomExpression expression = new CustomExpression(column.ForeignKeyColumnName,
+                    CustomOperations.Equals,
+                    dataRow[column.ParentTable.PrimaryKey.ColumnName]);
+
+                DataTable dataTable = _db.Select(referencedTable.Name, null, null, null, expression);
+
+                foreach (DataRow row in dataTable.Rows)
+                    list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row));
+            }
+
             return list;
         }
-        
+
         public void Delete<T>(object id) where T : class, new()
         {
             TableModel table = new TableModel(typeof(T));
@@ -147,6 +199,5 @@ namespace ORM.Core
 
             _db.Delete(table.Name, expression);
         }
-        
     }
 }

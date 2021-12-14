@@ -72,10 +72,55 @@ namespace ORM.ConsoleApp
 
         public void ShowEntityWithFkList()
         {
+            Teachers teacher = _dbContext.Get<Teachers>(1);
+            
+            Console.WriteLine($"Teacher {teacher.Firstname}");
+
+            foreach (Classes classes in teacher.Classes)
+            {
+                Console.WriteLine("Classes: " + classes.Name);
+            }
         }
 
         public void ShowEntityWithManyToManyRelation()
         {
+            Courses course = new Courses()
+            {
+                Name = "English",
+                Teacher = _dbContext.Get<Teachers>(1)
+            };
+
+            Students student = new Students()
+            {
+                Name = "Elisabeth",
+                Firstname = "The Name of First",
+                Grade = 1
+            };
+
+            student = _dbContext.Add(student);
+            course.Students.Add(student);
+            
+             student = new Students()
+            {
+                Name = "Samuel",
+                Firstname = "The Flying Fish",
+                Grade = 1
+            };
+
+             student = _dbContext.Add(student);
+             
+             course.Students.Add(student);
+
+             course = _dbContext.Add(course);
+             course = _dbContext.Get<Courses>(course.Id);
+             
+             Console.WriteLine($"Course : {course.Name} has following Students:");
+
+             foreach (Students students in course.Students)
+             {
+                 Console.WriteLine($"Student: {students.Firstname} {students.Name}");
+             }
+
         }
 
         public void ShowLazyList()

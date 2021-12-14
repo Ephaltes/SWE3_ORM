@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace ORM.Cache
+﻿namespace ORM.Core.Interfaces
 {
     public interface ICache
     {
-        public void Add(object entity);
+        public void Add(object entity, int id);
 
         public void Remove(object entity);
 
@@ -13,7 +10,7 @@ namespace ORM.Cache
 
         public void Remove(Type type);
 
-        public object Get(Type type, int id);
+        public object? Get(Type type, int id);
 
         public IEnumerable<object> GetAll(Type type);
 
