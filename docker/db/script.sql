@@ -30,7 +30,7 @@ CONSTRAINT fk_students_classes FOREIGN KEY (classesid) REFERENCES classes(id)
 CREATE TABLE courses(
 id serial PRIMARY KEY,
 name TEXT,
-hactive INT,
+active BOOLEAN,
 teachersid INT,
 CONSTRAINT fk_courses_teachers FOREIGN KEY (teachersid) REFERENCES teachers(id)
 );
