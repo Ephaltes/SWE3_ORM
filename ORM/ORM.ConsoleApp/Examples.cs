@@ -115,7 +115,7 @@ namespace ORM.ConsoleApp
              course = _dbContext.Get<Courses>(course.Id);
              
              Console.WriteLine($"Course : {course.Name} has following Students:");
-
+             
              foreach (Students students in course.Students)
              {
                  Console.WriteLine($"Student: {students.Firstname} {students.Name}");

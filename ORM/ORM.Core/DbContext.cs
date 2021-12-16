@@ -58,6 +58,7 @@ namespace ORM.Core
                         {foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity)},
                         {foreignKey.ForeignKeyColumnName, item.Id}
                     });
+                    Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),true);
                 }
             }
 
@@ -91,7 +92,7 @@ namespace ORM.Core
             return (T)CreateObject(typeof(T), result.Rows[0]);
         }
 
-        internal object? Get(object? id, Type type)
+        internal object? Get(object? id, Type type, bool forceUpdate=false)
         {
             if (id is null or DBNull)
                 return null;
@@ -100,7 +101,7 @@ namespace ORM.Core
 
             object? retVal = _cache.Get(type, Convert.ToInt32(id));
 
-            if (retVal is not null)
+            if (retVal is not null && !forceUpdate)
                 return retVal;
 
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
