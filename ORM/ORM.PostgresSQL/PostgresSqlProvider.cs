@@ -392,13 +392,11 @@ namespace ORM.PostgresSQL
                     #region Contains
 
                     if (filter.RightSide == null) return null;
+
                     if (filter.RightSide is string)
-                        clause +=
-                            "(" +
-                            (filter.LeftSide) + " LIKE " + ("%" + filter.RightSide) +
-                            "OR " + (filter.LeftSide) + " LIKE " + "%" + filter.RightSide +
-                            "%" + "OR " + (filter.LeftSide) + " LIKE " + filter.RightSide +
-                            "%" + ")";
+                        clause += $" ({filter.LeftSide} LIKE '%{filter.RightSide}%')" +
+                                  $" OR ( {filter.LeftSide} LIKE '%{filter.RightSide}')" +
+                                  $" OR ( {filter.LeftSide} LIKE '{filter.RightSide}%') ";
                     else
                         return null;
 
@@ -412,12 +410,9 @@ namespace ORM.PostgresSQL
 
                     if (filter.RightSide == null) return null;
                     if (filter.RightSide is string)
-                        clause +=
-                            "(" +
-                            (filter.LeftSide) + " NOT LIKE " + ("%" + filter.RightSide) +
-                            "OR " + (filter.LeftSide) + " NOT LIKE " + "%" +
-                            filter.RightSide + "%" + "OR " + (filter.LeftSide) +
-                            " NOT LIKE " + filter.RightSide + "%" + ")";
+                        clause +=$" ({filter.LeftSide} NOT LIKE '%{filter.RightSide}%')" +
+                                 $" OR ( {filter.LeftSide} NOT LIKE '%{filter.RightSide}')" +
+                                 $" OR ( {filter.LeftSide} NOT LIKE '{filter.RightSide}%') ";
                     else
                         return null;
 

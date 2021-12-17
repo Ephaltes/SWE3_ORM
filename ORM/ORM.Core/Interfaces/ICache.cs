@@ -5,8 +5,9 @@
     /// </summary>
     public interface ICache
     {
-        //TODO rework caching to work with objects instead of types
         public void Add(object entity, int id);
+
+        public void Update(object entity, int id);
 
         public void Remove(object entity);
 

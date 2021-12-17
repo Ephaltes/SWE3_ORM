@@ -99,7 +99,7 @@ namespace ORM.PostgresSQL.Model
         {
             if (prepend == null) throw new ArgumentNullException(nameof(prepend));
 
-            CustomExpression orig = new CustomExpression(this.LeftSide, this.Operator, this.RightSide);
+            CustomExpression orig = new CustomExpression(LeftSide, Operator, RightSide);
             CustomExpression e = PrependAndClause(prepend, orig);
             LeftSide = e.LeftSide;
             Operator = e.Operator;

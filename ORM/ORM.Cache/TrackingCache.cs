@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using ORM.Core.Interfaces;
 using ORM.Core.Models;
 
 namespace ORM.Cache;
@@ -60,6 +61,11 @@ public class TrackingCache : Cache
 
         Dictionary<int, string> typeDictionary = GetHash(entity.GetType());
         typeDictionary[id] = GenerateHash(entity);
+    }
+    
+    public override void Update(object entity, int id)
+    {
+        Add(entity, id);
     }
 
     public override void Remove(Type type, int id)

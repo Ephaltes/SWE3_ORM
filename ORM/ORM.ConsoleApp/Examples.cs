@@ -1,5 +1,6 @@
 ﻿using ORM.ConsoleApp.Entities;
 using ORM.Core;
+using ORM.Core.FluentApi;
 using ORM.Core.Models;
 
 namespace ORM.ConsoleApp
@@ -129,6 +130,7 @@ namespace ORM.ConsoleApp
 
         public void ShowQuery()
         {
+            var x = FluentApi.Get().Like("name", "li").Execute<Students>(_dbContext);
         }
     }
-}
+} 

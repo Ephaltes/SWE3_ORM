@@ -18,6 +18,10 @@ namespace ORM.Cache
                 _cache.Add(type, new Dictionary<int, object>());
             _cache[type][id] = entity;
         }
+        public virtual void Update(object entity, int id)
+        {
+            Add(entity,id);
+        }
 
         public virtual void Remove(object entity)
         {

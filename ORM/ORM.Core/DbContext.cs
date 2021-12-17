@@ -62,12 +62,12 @@ namespace ORM.Core
                         {foreignKey.ForeignKeyColumnName, item.Id}
                     });
                     var updatedReference = Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),true);
-                    _cache.Add(updatedReference,item.Id);
+                    _cache.Update(updatedReference,item.Id);
                 }
             }
 
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
-            _cache.Add(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
+            _cache.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
             return insertedEntity;
         }
 
@@ -96,6 +96,15 @@ namespace ORM.Core
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             return (T)CreateObject(typeof(T), result.Rows[0]);
+        }
+        
+        public IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new()
+        {
+            TableModel table = new TableModel(typeof(T));
+
+            DataTable result = _db.Select(table.Name, null, null, null, expression);
+
+            return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row)).ToList();
         }
 
         internal object? Get(object? id, Type type, bool forceUpdate=false)

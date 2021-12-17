@@ -27,6 +27,7 @@ namespace ORM.ConsoleApp
             example.ShowEntityWithFk();
             example.ShowEntityWithFkList();
             example.ShowEntityWithManyToManyRelation();
+            example.ShowQuery();
         }
     }
 }
