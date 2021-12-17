@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Data;
+using Microsoft.VisualBasic.CompilerServices;
 using ORM.Core.Interfaces;
 using ORM.Core.Models;
 using ORM.PostgresSQL.Interface;
@@ -20,6 +21,8 @@ namespace ORM.Core
 
         public T Add<T>(T entity) where T : class, new()
         {
+            if (!_cache.HasChanged(entity)) return entity;
+            
             TableModel table = new TableModel(typeof(T));
             List<ColumnModel> columns = table.Columns;
             Dictionary<string, object> columnValues =
@@ -58,11 +61,14 @@ namespace ORM.Core
                         {foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity)},
                         {foreignKey.ForeignKeyColumnName, item.Id}
                     });
-                    Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),true);
+                    var updatedReference = Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),true);
+                    _cache.Add(updatedReference,item.Id);
                 }
             }
 
-            return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
+            insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
+            _cache.Add(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
+            return insertedEntity;
         }
 
         public T Update<T>(T entity) where T : class, new()
@@ -200,5 +206,7 @@ namespace ORM.Core
 
             _db.Delete(table.Name, expression);
         }
+        
+        //TODO: local cache einführen damit es auch funktioniert wenn man kein ICache übergibt
     }
 }

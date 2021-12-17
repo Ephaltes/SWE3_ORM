@@ -90,12 +90,7 @@ namespace ORM.ConsoleApp
                 Teacher = _dbContext.Get<Teachers>(1)
             };
 
-            Students student = new Students()
-            {
-                Name = "Elisabeth",
-                Firstname = "The Name of First",
-                Grade = 1
-            };
+            Students student = _dbContext.Get<Students>(1);
 
             student = _dbContext.Add(student);
             course.Students.Add(student);
@@ -111,6 +106,7 @@ namespace ORM.ConsoleApp
              
              course.Students.Add(student);
 
+             course = _dbContext.Add(course);
              course = _dbContext.Add(course);
              course = _dbContext.Get<Courses>(course.Id);
              

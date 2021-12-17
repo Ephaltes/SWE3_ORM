@@ -1,4 +1,5 @@
-﻿using ORM.Core;
+﻿using ORM.Cache;
+using ORM.Core;
 using ORM.PostgresSQL;
 using ORM.PostgresSQL.Interface;
 
@@ -12,7 +13,7 @@ namespace ORM.ConsoleApp
                 new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;",
                     "orm");
 
-            Cache.Cache cache = new Cache.Cache();
+            TrackingCache cache = new TrackingCache();
 
 
             DbContext dbContext = new DbContext(db, cache);
