@@ -8,7 +8,7 @@ using ORM.PostgresSQL.Model;
 
 namespace ORM.Core
 {
-    public class DbContext
+    public class DbContext : IDbContext
     {
         private readonly ICache _cache;
         private readonly IDatabaseWrapper _db;

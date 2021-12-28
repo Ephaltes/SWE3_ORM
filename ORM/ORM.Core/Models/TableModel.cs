@@ -38,10 +38,5 @@ namespace ORM.Core.Models
         {
             return Columns.Single(x => x.PrimaryKey);
         }
-        public string? GetPropertyNameFromColumnName(string columnName)
-        {
-            return Columns.FirstOrDefault(x => string.Equals(x.ColumnName, columnName,StringComparison.InvariantCultureIgnoreCase))
-                ?.PropertyName;
-        }
     }
 }

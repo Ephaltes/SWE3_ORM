@@ -5,33 +5,33 @@ namespace ORM.Core.FluentApi;
 
 public class FluentApi : IAndOrQuery, IDefaultQueries
 {
-    private readonly CustomExpression _customExpression = new CustomExpression();
+    public readonly CustomExpression CustomExpression = new CustomExpression();
     private bool _isNot;
     private CustomExpression _tempExpression = new CustomExpression();
     private FluentApi()
     {
-        _customExpression.LeftSide = "1";
-        _customExpression.RightSide = "1";
-        _customExpression.Operator = CustomOperations.Equals;
-        _customExpression.PrependAnd(_tempExpression);
+        CustomExpression.LeftSide = "1";
+        CustomExpression.RightSide = "1";
+        CustomExpression.Operator = CustomOperations.Equals;
+        CustomExpression.PrependAnd(_tempExpression);
     }
     public IDefaultQueries And()
     {
         _tempExpression = new CustomExpression();
-        _customExpression.PrependAnd(_tempExpression);
+        CustomExpression.PrependAnd(_tempExpression);
 
         return this;
     }
     public IDefaultQueries Or()
     {
         _tempExpression = new CustomExpression();
-        _customExpression.PrependOr(_tempExpression);
+        CustomExpression.PrependOr(_tempExpression);
 
         return this;
     }
-    public IReadOnlyCollection<T> Execute<T>(DbContext dbContext) where T : class, new()
+    public IReadOnlyCollection<T> Execute<T>(IDbContext dbContext) where T : class, new()
     {
-        return dbContext.GetAll<T>(_customExpression);
+        return dbContext.GetAll<T>(CustomExpression);
     }
     public IAndOrQuery EqualTo(string field, object value)
     {
