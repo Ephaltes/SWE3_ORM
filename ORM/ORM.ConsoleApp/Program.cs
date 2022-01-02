@@ -10,8 +10,7 @@ namespace ORM.ConsoleApp
         private static void Main(string[] args)
         {
             IDatabaseWrapper db =
-                new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;",
-                    "orm");
+                new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;");
 
             TrackingCache cache = new TrackingCache();
 

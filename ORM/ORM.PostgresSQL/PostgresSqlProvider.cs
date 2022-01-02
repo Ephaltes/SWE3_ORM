@@ -12,45 +12,6 @@ namespace ORM.PostgresSQL
             return
                 "SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'";
         }
-        public static string LoadTableColumnsQuery(string databaseName, string tableName)
-        {
-            return
-                "SELECT " +
-                "  cols.COLUMN_NAME AS COLUMN_NAME, " +
-                "  cols.IS_NULLABLE AS IS_NULLABLE, " +
-                "  cols.DATA_TYPE AS DATA_TYPE, " +
-                "  cols.CHARACTER_MAXIMUM_LENGTH AS CHARACTER_MAXIMUM_LENGTH, " +
-                "  CASE " +
-                "    WHEN cons.COLUMN_NAME IS NULL THEN 'NO' ELSE 'YES' " +
-                "  END AS IS_PRIMARY_KEY " +
-                "FROM test.INFORMATION_SCHEMA.COLUMNS cols " +
-                "LEFT JOIN " + databaseName +
-                ".INFORMATION_SCHEMA.KEY_COLUMN_USAGE cons ON cols.COLUMN_NAME = cons.COLUMN_NAME " +
-                "WHERE cols.TABLE_NAME = '" + tableName + "';";
-        }
-        public static string CreateTableQuery(string tableName, List<DatabaseColumnModel> columns)
-        {
-            string query =
-                "CREATE TABLE " + tableName + " " +
-                "(";
-
-            int added = 0;
-            foreach (DatabaseColumnModel curr in columns)
-            {
-                if (added > 0) query += ", ";
-                query += ColumnToCreateString(curr);
-                added++;
-            }
-
-            query +=
-                ") " +
-                "WITH " +
-                "(" +
-                "  OIDS = FALSE" +
-                ")";
-
-            return query;
-        }
 
         internal static string ColumnToCreateString(DatabaseColumnModel col)
         {
@@ -103,12 +64,6 @@ namespace ORM.PostgresSQL
             else ret += "NOT NULL ";
 
             return ret;
-        }
-        public static string DropTableQuery(string tableName)
-        {
-            string query = "DROP TABLE IF EXISTS " + tableName + " ";
-
-            return query;
         }
         public static string SelectQuery(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter, DatabaseResultOrder[] resultOrder)
@@ -629,27 +584,7 @@ namespace ORM.PostgresSQL
                 "RETURNING *;"; 
             return ret;
         }
-        public static string InsertMultipleQuery(string tableName, string keys, List<string> values)
-        {
-            string ret =
-                "BEGIN TRANSACTION;" +
-                "  INSERT INTO " + tableName + " " +
-                "  (" + keys + ") " +
-                "  VALUES ";
-
-            int added = 0;
-            foreach (string value in values)
-            {
-                if (added > 0) ret += ",";
-                ret += "  (" + value + ")";
-                added++;
-            }
-
-            ret +=
-                ";  COMMIT; ";
-
-            return ret;
-        }
+       
         public static string UpdateQuery(string tableName, string keyValueClause, CustomExpression filter)
         {
             string ret =
@@ -669,63 +604,6 @@ namespace ORM.PostgresSQL
             if (filter != null) ret += "WHERE " + ExpressionToWhereClause(filter) + " ";
 
             return ret;
-        }
-        public static string ExistsQuery(string tableName, CustomExpression filter)
-        {
-            string query = "";
-            string whereClause = "";
-             
-            // select 
-            query =
-                "SELECT * " +
-                "FROM " + tableName + " ";
-             
-            // expressions 
-            if (filter != null) whereClause = ExpressionToWhereClause(filter);
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                query += "WHERE " + whereClause + " ";
-            }
-
-            query += "LIMIT 1";
-            return query;
-        }
-        public static string CountQuery(string tableName, string countColumnName, CustomExpression filter)
-        {
-            string query = "";
-            string whereClause = "";
-             
-            // select 
-            query =
-                "SELECT COUNT(*) AS " + countColumnName + " " +
-                "FROM " + tableName + " ";
-             
-            // expressions 
-            if (filter != null) whereClause = ExpressionToWhereClause(filter);
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                query += "WHERE " + whereClause + " ";
-            }
-
-            return query;
-        }
-        public static string SumQuery(string tableName, string fieldName, string sumColumnName, CustomExpression filter)
-        {
-            string whereClause = "";
-             
-            // select 
-            string query =
-                "SELECT SUM(" + fieldName + ") AS " + sumColumnName + " " +
-                "FROM " + tableName + " ";
-             
-            // expressions 
-            if (filter != null) whereClause = ExpressionToWhereClause(filter);
-            if (!String.IsNullOrEmpty(whereClause))
-            {
-                query += "WHERE " + whereClause + " ";
-            }
-
-            return query;
         }
     }
 }
