@@ -36,37 +36,37 @@ namespace ORM.PostgresSQL
 
             switch (toString)
             {
-                case "bigserial": // pgsql
-                case "bigint": // mssql
+                case "bigserial": 
+                case "bigint": 
                     return DatabaseColumnType.Long;
 
-                case "boolean": // pgsql
-                case "integer": // pgsql, sqlite
-                case "int": // mssql, mysql
-                case "serial": // pgsql
+                case "boolean":
+                case "integer": 
+                case "int": 
+                case "serial": 
                     return DatabaseColumnType.Int;
 
-                case "double": // mysql
-                case "double precision": // pgsql
-                case "float": // mysql
+                case "double": 
+                case "double precision":
+                case "float": 
                     return DatabaseColumnType.Double;
 
-                case "date": // mssql, mysql
+                case "date": 
                     return DatabaseColumnType.DateTime;
 
-                case "timestamp without timezone": // pgsql
-                case "timestamp without time zone": // pgsql
-                case "time without timezone": // pgsql
-                case "time without time zone": // pgsql
+                case "timestamp without timezone": 
+                case "timestamp without time zone": 
+                case "time without timezone": 
+                case "time without time zone": 
                     return DatabaseColumnType.TimeSpan;
 
-                case "text": // mssql, mysql, pgsql, sqlite
-                case "varchar": // mssql, mysql, pgsql
+                case "text": 
+                case "varchar": 
                     return DatabaseColumnType.Varchar;
 
                 case "blob":
                 case "bytea":
-                    return DatabaseColumnType.Blob; // sqlite
+                    return DatabaseColumnType.Blob;
 
                 default:
                     throw new ArgumentException("Unknown DataType: " + toString);

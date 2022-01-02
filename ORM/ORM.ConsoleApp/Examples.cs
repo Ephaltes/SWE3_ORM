@@ -91,9 +91,14 @@ namespace ORM.ConsoleApp
                 Teacher = _dbContext.Get<Teachers>(1)
             };
 
-            Students student = _dbContext.Get<Students>(1);
-
+            Students student = new Students()
+            {
+                Name = "Elisabeth",
+                Firstname = "The Sleeping Panda",
+                Grade = 1
+            };
             student = _dbContext.Add(student);
+
             course.Students.Add(student);
             
              student = new Students()
@@ -131,6 +136,11 @@ namespace ORM.ConsoleApp
         public void ShowQuery()
         {
             var x = FluentApi.Get().Like("name", "li").Execute<Students>(_dbContext);
+
+            foreach (Students students in x)
+            {
+                Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
+            }
         }
     }
 } 

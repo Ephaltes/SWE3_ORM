@@ -32,6 +32,7 @@ namespace ORM.PostgresSQL.Interface
 
         public void Delete(string tableName, CustomExpression filter);
 
+
         public DataTable Query(string query);
 
         public bool Exists(string tableName, CustomExpression filter);

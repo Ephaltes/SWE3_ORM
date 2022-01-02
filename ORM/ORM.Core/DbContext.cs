@@ -21,7 +21,7 @@ namespace ORM.Core
 
         public T Add<T>(T entity) where T : class, new()
         {
-            if (!_cache.HasChanged(entity)) return entity;
+            if (_cache is not null && !_cache.HasChanged(entity)) return entity;
             
             TableModel table = new TableModel(typeof(T));
             List<ColumnModel> columns = table.Columns;
@@ -61,13 +61,13 @@ namespace ORM.Core
                         {foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity)},
                         {foreignKey.ForeignKeyColumnName, item.Id}
                     });
-                    var updatedReference = Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),true);
-                    _cache.Update(updatedReference,item.Id);
+                    var updatedReference = Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),null,true);
+                    _cache?.Update(updatedReference,item.Id);
                 }
             }
 
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
-            _cache.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
+            _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
             return insertedEntity;
         }
 
@@ -89,32 +89,35 @@ namespace ORM.Core
         public T Get<T>(object id) where T : class, new()
         {
             TableModel table = new TableModel(typeof(T));
+            IDictionary<Type, Dictionary<int, object>>? localCache = null;
 
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return (T)CreateObject(typeof(T), result.Rows[0]);
+            return (T)CreateObject(typeof(T), result.Rows[0],localCache);
         }
         
         public IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new()
         {
+            IDictionary<Type, Dictionary<int, object>>? localCache = null;
+            
             TableModel table = new TableModel(typeof(T));
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row)).ToList();
+            return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row,localCache)).ToList();
         }
 
-        internal object? Get(object? id, Type type, bool forceUpdate=false)
+        internal object? Get(object? id, Type type,IDictionary<Type, Dictionary<int, object>>? localCache = null, bool forceUpdate=false)
         {
             if (id is null or DBNull)
                 return null;
 
             TableModel table = new TableModel(type);
 
-            object? retVal = _cache.Get(type, Convert.ToInt32(id));
+            object? retVal = SearchCaches(type, Convert.ToInt32(id), localCache);
 
             if (retVal is not null && !forceUpdate)
                 return retVal;
@@ -124,18 +127,25 @@ namespace ORM.Core
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return CreateObject(type, result.Rows[0]);
+            return CreateObject(type, result.Rows[0],localCache);
         }
 
-        private object? CreateObject(Type type, DataRow row)
+        private object? CreateObject(Type type, DataRow row, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
             TableModel table = new TableModel(type);
-            object? instance = _cache.Get(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+            object? instance = SearchCaches(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]),localCache);
 
             if (instance is null)
             {
                 instance = Activator.CreateInstance(type);
-                _cache.Add(instance, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+                
+                localCache ??= new Dictionary<Type, Dictionary<int, object>>();
+                
+                if (!localCache.ContainsKey(type))
+                    localCache.Add(type, new Dictionary<int, object>());
+                
+                int id = Convert.ToInt32(row[table.PrimaryKey.ColumnName]);
+                localCache[type][id] = instance;
             }
 
             foreach (ColumnModel column in table.Columns)
@@ -146,7 +156,7 @@ namespace ORM.Core
                 if (foreignKeyColumn.IsReferenced)
                 {
                     // 1 : n foreign key
-                    IList list = GetList(foreignKeyColumn, row);
+                    IList list = GetList(foreignKeyColumn, row,localCache);
 
                     foreignKeyColumn.SetValue(instance, list);
 
@@ -155,7 +165,7 @@ namespace ORM.Core
 
                 if (foreignKeyColumn.IsManyToMany)
                 {
-                    IList list = GetList(foreignKeyColumn, row);
+                    IList list = GetList(foreignKeyColumn, row,localCache);
                     foreignKeyColumn.SetValue(instance, list);
 
                     continue;
@@ -163,15 +173,29 @@ namespace ORM.Core
 
                 //1 : 1 foreign Key
                 object foreignKeyValue = row[foreignKeyColumn.ForeignKeyColumnName];
-                object? foreignKeyObject = Get(foreignKeyValue, foreignKeyColumn.Type);
+                object? foreignKeyObject = Get(foreignKeyValue, foreignKeyColumn.Type, localCache);
 
                 foreignKeyColumn.SetValue(instance, foreignKeyObject);
             }
 
+            if(_cache is not null)
+                _cache.Add(instance,Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+            
             return instance;
         }
+        private object? SearchCaches(Type type, int id, IDictionary<Type, Dictionary<int, object>>? localCache)
+        {
+            if(_cache is not null && _cache.Contains(type, id))
+                return _cache.Get(type, id);
+            
+            if(localCache is not null && localCache.ContainsKey(type) && localCache[type].ContainsKey(id))
+                return localCache[type][id];
 
-        private IList GetList(ColumnModel column, DataRow dataRow)
+            return null;
+        }
+      
+
+        private IList GetList(ColumnModel column, DataRow dataRow, IDictionary<Type, Dictionary<int, object>>?  localCache)
         {
             Type tableType = column.Type.GenericTypeArguments.First();
             TableModel referencedTable = new TableModel(tableType);
@@ -187,7 +211,7 @@ namespace ORM.Core
 
                 foreach (DataRow row in result.Rows)
                 {
-                    object? instance = Get(row[column.ForeignKeyColumnName], tableType);
+                    object? instance = Get(row[column.ForeignKeyColumnName], tableType, localCache);
                     list.Add(instance);
                 }
             }
@@ -200,7 +224,7 @@ namespace ORM.Core
                 DataTable dataTable = _db.Select(referencedTable.Name, null, null, null, expression);
 
                 foreach (DataRow row in dataTable.Rows)
-                    list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row));
+                    list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row,localCache));
             }
 
             return list;
