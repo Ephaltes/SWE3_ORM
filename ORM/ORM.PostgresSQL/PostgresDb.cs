@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using Npgsql;
@@ -10,6 +11,7 @@ using ORM.PostgresSQL.Model;
 
 namespace ORM.PostgresSQL
 {
+    [ExcludeFromCodeCoverage]
     public class PostgresDb : IDatabaseWrapper
     {
         private readonly string _connectionString;

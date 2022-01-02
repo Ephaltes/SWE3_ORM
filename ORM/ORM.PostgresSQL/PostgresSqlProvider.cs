@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using ORM.PostgresSQL.Model;
 
 namespace ORM.PostgresSQL
 {
+    [ExcludeFromCodeCoverage]
     public static class PostgresSqlProvider
     {
         internal static string TimestampFormat = "yyyy-MM-dd hh:mm:ss";
