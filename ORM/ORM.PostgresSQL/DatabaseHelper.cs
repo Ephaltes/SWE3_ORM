@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using ORM.PostgresSQL.Model;
+﻿using System.Collections;
 
 namespace ORM.PostgresSQL
 {
     public class DatabaseHelper
     {
+        /// <summary>
+        ///     Checks whether the object is an IEnumerable
+        /// </summary>
+        /// <param name="o">object to check</param>
+        /// <returns>true if it is a list else false</returns>
         public static bool IsList(object o)
         {
             if (o == null) return false;
@@ -16,6 +18,11 @@ namespace ORM.PostgresSQL
                    o.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>));
         }
 
+        /// <summary>
+        ///     Converts an object into a List
+        /// </summary>
+        /// <param name="obj">object to convert to list</param>
+        /// <returns>List of object</returns>
         public static List<object> ObjectToList(object obj)
         {
             if (obj == null) return null;
@@ -26,51 +33,6 @@ namespace ORM.PostgresSQL
                 ret.Add(enumerator.Current);
 
             return ret;
-        }
-        public static DatabaseColumnType DataTypeFromString(string? toString)
-        {
-            if (string.IsNullOrEmpty(toString)) throw new ArgumentNullException(nameof(toString));
-
-            toString = toString.ToLower();
-            if (toString.Contains("(")) toString = toString.Substring(0, toString.IndexOf("("));
-
-            switch (toString)
-            {
-                case "bigserial": 
-                case "bigint": 
-                    return DatabaseColumnType.Long;
-
-                case "boolean":
-                case "integer": 
-                case "int": 
-                case "serial": 
-                    return DatabaseColumnType.Int;
-
-                case "double": 
-                case "double precision":
-                case "float": 
-                    return DatabaseColumnType.Double;
-
-                case "date": 
-                    return DatabaseColumnType.DateTime;
-
-                case "timestamp without timezone": 
-                case "timestamp without time zone": 
-                case "time without timezone": 
-                case "time without time zone": 
-                    return DatabaseColumnType.TimeSpan;
-
-                case "text": 
-                case "varchar": 
-                    return DatabaseColumnType.Varchar;
-
-                case "blob":
-                case "bytea":
-                    return DatabaseColumnType.Blob;
-
-                default:
-                    throw new ArgumentException("Unknown DataType: " + toString);
-            }
         }
     }
 }

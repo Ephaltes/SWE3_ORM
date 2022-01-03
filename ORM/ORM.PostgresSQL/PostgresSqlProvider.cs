@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using ORM.PostgresSQL.Model;
 
 namespace ORM.PostgresSQL
@@ -9,12 +7,22 @@ namespace ORM.PostgresSQL
     public static class PostgresSqlProvider
     {
         internal static string TimestampFormat = "yyyy-MM-dd hh:mm:ss";
+        /// <summary>
+        ///     Query to get Table Names
+        /// </summary>
+        /// <returns></returns>
         public static string LoadTableNamesQuery()
         {
             return
                 "SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'";
         }
 
+        /// <summary>
+        ///     Converts enum into database type
+        /// </summary>
+        /// <param name="col"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         internal static string ColumnToCreateString(DatabaseColumnModel col)
         {
             string ret =
@@ -67,13 +75,22 @@ namespace ORM.PostgresSQL
 
             return ret;
         }
+        /// <summary>
+        ///     Creates the select statement for a table
+        /// </summary>
+        /// <param name="tableName">table to select from</param>
+        /// <param name="indexStart">offset</param>
+        /// <param name="maxResults">limit</param>
+        /// <param name="returnFields">fields to return</param>
+        /// <param name="filter">where clause</param>
+        /// <param name="resultOrder">ASC or DESC</param>
+        /// <returns></returns>
         public static string SelectQuery(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter, DatabaseResultOrder[] resultOrder)
         {
             string query = "";
             string whereClause = "";
 
-            // SELECT 
             query += "SELECT ";
 
             // fields 
@@ -367,9 +384,9 @@ namespace ORM.PostgresSQL
 
                     if (filter.RightSide == null) return null;
                     if (filter.RightSide is string)
-                        clause +=$" ({filter.LeftSide} NOT LIKE '%{filter.RightSide}%')" +
-                                 $" OR ( {filter.LeftSide} NOT LIKE '%{filter.RightSide}')" +
-                                 $" OR ( {filter.LeftSide} NOT LIKE '{filter.RightSide}%') ";
+                        clause += $" ({filter.LeftSide} NOT LIKE '%{filter.RightSide}%')" +
+                                  $" OR ( {filter.LeftSide} NOT LIKE '%{filter.RightSide}')" +
+                                  $" OR ( {filter.LeftSide} NOT LIKE '{filter.RightSide}%') ";
                     else
                         return null;
 
@@ -385,7 +402,7 @@ namespace ORM.PostgresSQL
                     if (filter.RightSide is string)
                         clause +=
                             "(" +
-                            filter.LeftSide.ToString() + " LIKE " + (filter.RightSide + "%") +
+                            filter.LeftSide + " LIKE " + (filter.RightSide + "%") +
                             ")";
                     else
                         return null;
@@ -402,7 +419,7 @@ namespace ORM.PostgresSQL
                     if (filter.RightSide is string)
                         clause +=
                             "(" +
-                            filter.LeftSide.ToString() + " NOT LIKE " + (filter.RightSide + "%") +
+                            filter.LeftSide + " NOT LIKE " + (filter.RightSide + "%") +
                             ")";
                     else
                         return null;
@@ -419,7 +436,7 @@ namespace ORM.PostgresSQL
                     if (filter.RightSide is string)
                         clause +=
                             "(" +
-                            filter.LeftSide.ToString() + " LIKE " + ("%" + filter.RightSide) +
+                            filter.LeftSide + " LIKE " + ("%" + filter.RightSide) +
                             ")";
                     else
                         return null;
@@ -436,7 +453,7 @@ namespace ORM.PostgresSQL
                     if (filter.RightSide is string)
                         clause +=
                             "(" +
-                            filter.LeftSide.ToString() + " NOT LIKE " + ("%" + filter.RightSide) +
+                            filter.LeftSide + " NOT LIKE " + ("%" + filter.RightSide) +
                             ")";
                     else
                         return null;
@@ -572,10 +589,22 @@ namespace ORM.PostgresSQL
 
             return clause;
         }
+        /// <summary>
+        ///     Converts datetime to databse datetime format
+        /// </summary>
+        /// <param name="toDateTime">datetime to convert to databse time</param>
+        /// <returns>datetime format for database</returns>
         internal static object DbTimestamp(DateTime toDateTime)
         {
             return toDateTime.ToString(TimestampFormat);
         }
+        /// <summary>
+        ///     Insert statement for table
+        /// </summary>
+        /// <param name="tableName">tablename</param>
+        /// <param name="keys">keys</param>
+        /// <param name="values">values</param>
+        /// <returns>insert statement</returns>
         public static string InsertQuery(string tableName, string keys, string values)
         {
             string ret =
@@ -583,10 +612,17 @@ namespace ORM.PostgresSQL
                 "(" + keys + ") " +
                 "VALUES " +
                 "(" + values + ") " +
-                "RETURNING *;"; 
+                "RETURNING *;";
+
             return ret;
         }
-       
+        /// <summary>
+        /// Creates Update Statement
+        /// </summary>
+        /// <param name="tableName">tablename to update</param>
+        /// <param name="keyValueClause">fields to update</param>
+        /// <param name="filter">where clause</param>
+        /// <returns>update statement</returns>
         public static string UpdateQuery(string tableName, string keyValueClause, CustomExpression filter)
         {
             string ret =
@@ -598,6 +634,12 @@ namespace ORM.PostgresSQL
 
             return ret;
         }
+        /// <summary>
+        /// Creates Delete Statement
+        /// </summary>
+        /// <param name="tableName">table to delete from</param>
+        /// <param name="filter">where clause</param>
+        /// <returns>delete statement</returns>
         public static string DeleteQuery(string tableName, CustomExpression filter)
         {
             string ret =

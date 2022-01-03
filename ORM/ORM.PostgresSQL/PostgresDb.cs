@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.OleDb;
+﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Linq.Expressions;
 using Npgsql;
 using ORM.PostgresSQL.Interface;
 using ORM.PostgresSQL.Model;
@@ -22,7 +17,7 @@ namespace ORM.PostgresSQL
 
             _connectionString = connectionString;
         }
-
+        /// <inheritdoc />
         public List<string> ListTables()
         {
             List<string> tableNames = new List<string>();
@@ -36,23 +31,26 @@ namespace ORM.PostgresSQL
 
             return tableNames;
         }
-    
+        /// <inheritdoc />
         public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
             CustomExpression filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
-            return Query(PostgresSqlProvider.SelectQuery(tableName, indexStart, maxResults, returnFields, filter, null));
+
+            return Query(PostgresSqlProvider.SelectQuery(tableName, indexStart, maxResults, returnFields, filter,
+                null));
         }
-      
+        /// <inheritdoc />
         public DataTable Insert(string tableName, Dictionary<string, object> keyValuePairs)
         {
-           if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
-            if (keyValuePairs == null || keyValuePairs.Count < 1) throw new ArgumentNullException(nameof(keyValuePairs));
-             
-            #region Build-Key-Value-Pairs
+            if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
+            if (keyValuePairs == null || keyValuePairs.Count < 1)
+                throw new ArgumentNullException(nameof(keyValuePairs));
+
+            #region key value
 
             string keys = "";
-            string values = ""; 
+            string values = "";
             int added = 0;
 
             foreach (KeyValuePair<string, object> curr in keyValuePairs)
@@ -68,7 +66,6 @@ namespace ORM.PostgresSQL
                 keys += curr.Key;
 
                 if (curr.Value != null)
-                {
                     values += curr.Value switch
                     {
                         DateTime time => "'" + PostgresSqlProvider.DbTimestamp(time) + "'",
@@ -77,32 +74,27 @@ namespace ORM.PostgresSQL
                         Enum => (int)curr.Value,
                         _ => $"'{curr.Value}'"
                     };
-                }
                 else
-                {
                     values += "null";
-                }
 
                 added++;
             }
 
             #endregion
 
-            #region Build-INSERT-Query-and-Submit
 
-            return Query(PostgresSqlProvider.InsertQuery(tableName, keys, values)); 
-
-            #endregion 
+            return Query(PostgresSqlProvider.InsertQuery(tableName, keys, values));
         }
-
+        /// <inheritdoc />
         public DataTable Update(string tableName, Dictionary<string, object> keyValuePairs, CustomExpression filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
-            if (keyValuePairs == null || keyValuePairs.Count < 1) throw new ArgumentNullException(nameof(keyValuePairs));
-             
-            #region Build-Key-Value-Clause
+            if (keyValuePairs == null || keyValuePairs.Count < 1)
+                throw new ArgumentNullException(nameof(keyValuePairs));
 
-            string keyValueClause = ""; 
+            #region key value
+
+            string keyValueClause = "";
             int added = 0;
 
             foreach (KeyValuePair<string, object> curr in keyValuePairs)
@@ -110,40 +102,36 @@ namespace ORM.PostgresSQL
                 if (string.IsNullOrEmpty(curr.Key)) continue;
 
                 if (added > 0) keyValueClause += ",";
-                 
+
                 if (curr.Value != null)
-                {
                     keyValueClause += curr.Value switch
                     {
-                        DateTime time => (curr.Key) + "='" + PostgresSqlProvider.DbTimestamp(time) + "'",
-                        TimeSpan span => (curr.Key) + "='" + span + "'",
-                        int or long or decimal => (curr.Key) + "=" + curr.Value,
-                        Enum => $"{curr.Key} = {(int)curr.Value}" ,
+                        DateTime time => curr.Key + "='" + PostgresSqlProvider.DbTimestamp(time) + "'",
+                        TimeSpan span => curr.Key + "='" + span + "'",
+                        int or long or decimal => curr.Key + "=" + curr.Value,
+                        Enum => $"{curr.Key} = {(int)curr.Value}",
                         _ => $"{curr.Key} = '{curr.Value}'"
                     };
-                }
                 else
-                {
-                    keyValueClause += (curr.Key) + "= null";
-                } 
+                    keyValueClause += curr.Key + "= null";
 
                 added++;
             }
 
             #endregion
 
-            #region Build-UPDATE-Query-and-Submit
 
             return Query(PostgresSqlProvider.UpdateQuery(tableName, keyValueClause, filter));
-
-            #endregion
         }
+        /// <inheritdoc />
         public void Delete(string tableName, CustomExpression filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
             if (filter == null) throw new ArgumentNullException(nameof(filter));
+
             Query(PostgresSqlProvider.DeleteQuery(tableName, filter));
         }
+        /// <inheritdoc />
         public DataTable Query(string query)
         {
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(query);
@@ -160,9 +148,7 @@ namespace ORM.PostgresSQL
                     da.Fill(ds);
 
                     if (ds != null && ds.Tables != null && ds.Tables.Count > 0)
-                    {
                         result = ds.Tables[0];
-                    }
 
                     conn.Close();
                 }
@@ -172,9 +158,9 @@ namespace ORM.PostgresSQL
             catch (Exception e)
             {
                 e.Data.Add("Query", query);
+
                 throw;
             }
         }
-     
     }
 }

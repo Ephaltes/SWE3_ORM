@@ -9,11 +9,19 @@ using ORM.Core.Models;
 
 namespace ORM.Cache;
 
+/// <summary>
+/// Tracking cache, used to track changes in the cache
+/// </summary>
 public class TrackingCache : Cache
 {
     protected readonly Dictionary<Type, Dictionary<int, string>> _hashes =
         new Dictionary<Type, Dictionary<int, string>>();
 
+    /// <summary>
+    /// Get the hash of a specific type
+    /// </summary>
+    /// <param name="type">type to get hash</param>
+    /// <returns>returns a list of objects ids with their hashes</returns>
     protected virtual Dictionary<int, string> GetHash(Type type)
     {
         bool contains = _hashes.ContainsKey(type);
@@ -25,10 +33,9 @@ public class TrackingCache : Cache
     }
 
     /// <summary>
-    ///     Compute a hash for the given object with its properties and values.
+    ///  Compute a hash for the given object with its properties and values.
     /// </summary>
-    /// <param name="obj"></param>
-    /// <param name="id"></param>
+    /// <param name="obj">object to generate hash from</param>
     /// <returns></returns>
     protected virtual string GenerateHash(object obj)
     {
@@ -55,6 +62,7 @@ public class TrackingCache : Cache
         return Encoding.UTF8.GetString(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rval)));
     }
 
+    /// <inheritdoc/>
     public override void Add(object entity, int id)
     {
         base.Add(entity, id);
@@ -62,18 +70,18 @@ public class TrackingCache : Cache
         Dictionary<int, string> typeDictionary = GetHash(entity.GetType());
         typeDictionary[id] = GenerateHash(entity);
     }
-    
+    /// <inheritdoc/>
     public override void Update(object entity, int id)
     {
         Add(entity, id);
     }
-
+    /// <inheritdoc/>
     public override void Remove(Type type, int id)
     {
         base.Remove(type, id);
         GetHash(type).Remove(id);
     }
-
+    /// <inheritdoc/>
     public override bool HasChanged(object entity)
     {
         Dictionary<int, string> typeDictionary = GetHash(entity.GetType());
@@ -84,4 +92,5 @@ public class TrackingCache : Cache
 
         return true;
     }
+    
 }

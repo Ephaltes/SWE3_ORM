@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Data;
-using Microsoft.VisualBasic.CompilerServices;
 using ORM.Core.Interfaces;
 using ORM.Core.Models;
 using ORM.PostgresSQL.Interface;
@@ -19,10 +18,12 @@ namespace ORM.Core
             _cache = cache;
         }
 
+        /// <inheritdoc />
+
         public T Add<T>(T entity) where T : class, new()
         {
             if (_cache is not null && !_cache.HasChanged(entity)) return entity;
-            
+
             TableModel table = new TableModel(typeof(T));
             List<ColumnModel> columns = table.Columns;
             Dictionary<string, object> columnValues =
@@ -54,22 +55,25 @@ namespace ORM.Core
                 if (value is null || value.Count <= 0 || value.GetType() != foreignKey.Type)
                     continue;
 
-                foreach(var item in value)
+                foreach (dynamic? item in value)
                 {
                     _db.Insert(foreignKey.ForeignKeyTableName, new Dictionary<string, object>
                     {
-                        {foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity)},
-                        {foreignKey.ForeignKeyColumnName, item.Id}
+                        { foreignKey.ColumnName, table.PrimaryKey.GetValue(insertedEntity) },
+                        { foreignKey.ForeignKeyColumnName, item.Id }
                     });
-                    var updatedReference = Get(item.Id,foreignKey.Type.GenericTypeArguments.First(),null,true);
-                    _cache?.Update(updatedReference,item.Id);
+                    dynamic? updatedReference = Get(item.Id, foreignKey.Type.GenericTypeArguments.First(), null, true);
+                    _cache?.Update(updatedReference, item.Id);
                 }
             }
 
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
             _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
+
             return insertedEntity;
         }
+
+        /// <inheritdoc />
 
         public T Update<T>(T entity) where T : class, new()
         {
@@ -85,6 +89,7 @@ namespace ORM.Core
 
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
+        /// <inheritdoc />
 
         public T Get<T>(object id) where T : class, new()
         {
@@ -96,21 +101,35 @@ namespace ORM.Core
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return (T)CreateObject(typeof(T), result.Rows[0],localCache);
+            return (T)CreateObject(typeof(T), result.Rows[0], localCache);
         }
-        
+
+        /// <inheritdoc />
+
         public IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new()
         {
             IDictionary<Type, Dictionary<int, object>>? localCache = null;
-            
+
             TableModel table = new TableModel(typeof(T));
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row,localCache)).ToList();
+            return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row, localCache)).ToList();
+        }
+        /// <inheritdoc />
+
+        public void Delete<T>(object id) where T : class, new()
+        {
+            TableModel table = new TableModel(typeof(T));
+
+            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+                id);
+
+            _db.Delete(table.Name, expression);
         }
 
-        internal object? Get(object? id, Type type,IDictionary<Type, Dictionary<int, object>>? localCache = null, bool forceUpdate=false)
+        internal object? Get(object? id, Type type, IDictionary<Type, Dictionary<int, object>>? localCache = null,
+            bool forceUpdate = false)
         {
             if (id is null or DBNull)
                 return null;
@@ -127,23 +146,23 @@ namespace ORM.Core
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
-            return CreateObject(type, result.Rows[0],localCache);
+            return CreateObject(type, result.Rows[0], localCache);
         }
 
         private object? CreateObject(Type type, DataRow row, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
             TableModel table = new TableModel(type);
-            object? instance = SearchCaches(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]),localCache);
+            object? instance = SearchCaches(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]), localCache);
 
             if (instance is null)
             {
                 instance = Activator.CreateInstance(type);
-                
+
                 localCache ??= new Dictionary<Type, Dictionary<int, object>>();
-                
+
                 if (!localCache.ContainsKey(type))
                     localCache.Add(type, new Dictionary<int, object>());
-                
+
                 int id = Convert.ToInt32(row[table.PrimaryKey.ColumnName]);
                 localCache[type][id] = instance;
             }
@@ -156,7 +175,7 @@ namespace ORM.Core
                 if (foreignKeyColumn.IsReferenced)
                 {
                     // 1 : n foreign key
-                    IList list = GetList(foreignKeyColumn, row,localCache);
+                    IList list = GetList(foreignKeyColumn, row, localCache);
 
                     foreignKeyColumn.SetValue(instance, list);
 
@@ -165,7 +184,7 @@ namespace ORM.Core
 
                 if (foreignKeyColumn.IsManyToMany)
                 {
-                    IList list = GetList(foreignKeyColumn, row,localCache);
+                    IList list = GetList(foreignKeyColumn, row, localCache);
                     foreignKeyColumn.SetValue(instance, list);
 
                     continue;
@@ -178,24 +197,25 @@ namespace ORM.Core
                 foreignKeyColumn.SetValue(instance, foreignKeyObject);
             }
 
-            if(_cache is not null)
-                _cache.Add(instance,Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
-            
+            if (_cache is not null)
+                _cache.Add(instance, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+
             return instance;
         }
         private object? SearchCaches(Type type, int id, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
-            if(_cache is not null && _cache.Contains(type, id))
+            if (_cache is not null && _cache.Contains(type, id))
                 return _cache.Get(type, id);
-            
-            if(localCache is not null && localCache.ContainsKey(type) && localCache[type].ContainsKey(id))
+
+            if (localCache is not null && localCache.ContainsKey(type) && localCache[type].ContainsKey(id))
                 return localCache[type][id];
 
             return null;
         }
-      
 
-        private IList GetList(ColumnModel column, DataRow dataRow, IDictionary<Type, Dictionary<int, object>>?  localCache)
+
+        private IList GetList(ColumnModel column, DataRow dataRow,
+            IDictionary<Type, Dictionary<int, object>>? localCache)
         {
             Type tableType = column.Type.GenericTypeArguments.First();
             TableModel referencedTable = new TableModel(tableType);
@@ -224,22 +244,11 @@ namespace ORM.Core
                 DataTable dataTable = _db.Select(referencedTable.Name, null, null, null, expression);
 
                 foreach (DataRow row in dataTable.Rows)
-                    list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row,localCache));
+                    list.Add(CreateObject(column.Type.GenericTypeArguments.First(), row, localCache));
             }
 
             return list;
         }
 
-        public void Delete<T>(object id) where T : class, new()
-        {
-            TableModel table = new TableModel(typeof(T));
-
-            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
-                id);
-
-            _db.Delete(table.Name, expression);
-        }
-        
-        //TODO: local cache einführen damit es auch funktioniert wenn man kein ICache übergibt
     }
 }

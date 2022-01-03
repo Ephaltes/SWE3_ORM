@@ -9,15 +9,7 @@ namespace ORM.ConsoleApp
     {
         private static void Main(string[] args)
         {
-            IDatabaseWrapper db =
-                new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;");
-
-            TrackingCache cache = new TrackingCache();
-
-
-            DbContext dbContext = new DbContext(db, cache);
-
-            Examples example = new Examples(dbContext);
+            Examples example = new Examples();
 
             Console.WriteLine("Hello World!");
             example.DisplayTables();
@@ -26,6 +18,7 @@ namespace ORM.ConsoleApp
             example.ShowEntityWithFk();
             example.ShowEntityWithFkList();
             example.ShowEntityWithManyToManyRelation();
+            example.ShowCaching();
             example.ShowQuery();
         }
     }

@@ -1,16 +1,28 @@
-﻿using ORM.ConsoleApp.Entities;
+﻿using ORM.Cache;
+using ORM.ConsoleApp.Entities;
 using ORM.Core;
 using ORM.Core.FluentApi;
 using ORM.Core.Models;
+using ORM.PostgresSQL;
+using ORM.PostgresSQL.Interface;
 
 namespace ORM.ConsoleApp
 {
+    /// <summary>
+    ///     Class with examples to show how the orm is working
+    /// </summary>
     public class Examples
     {
+        private readonly IDatabaseWrapper _databaseWrapper;
         private readonly DbContext _dbContext;
-        public Examples(DbContext dbContext)
+        public Examples()
         {
-            _dbContext = dbContext;
+            _databaseWrapper =
+                new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;");
+
+            TrackingCache cache = new TrackingCache();
+
+            _dbContext = new DbContext(_databaseWrapper, cache);
         }
         public void DisplayTables()
         {
@@ -65,33 +77,30 @@ namespace ORM.ConsoleApp
 
             _dbContext.Add(classes);
 
-            var classes1 = _dbContext.Get<Classes>(1);
-            
-            Console.WriteLine($"Id: {classes1.Id}, Name: {classes1.Name}, Teacher: {classes1.Teacher.Firstname}");
+            Classes classes1 = _dbContext.Get<Classes>(1);
 
+            Console.WriteLine($"Id: {classes1.Id}, Name: {classes1.Name}, Teacher: {classes1.Teacher.Firstname}");
         }
 
         public void ShowEntityWithFkList()
         {
             Teachers teacher = _dbContext.Get<Teachers>(1);
-            
+
             Console.WriteLine($"Teacher {teacher.Firstname}");
 
             foreach (Classes classes in teacher.Classes)
-            {
                 Console.WriteLine("Classes: " + classes.Name);
-            }
         }
 
         public void ShowEntityWithManyToManyRelation()
         {
-            Courses course = new Courses()
+            Courses course = new Courses
             {
                 Name = "English",
                 Teacher = _dbContext.Get<Teachers>(1)
             };
 
-            Students student = new Students()
+            Students student = new Students
             {
                 Name = "Elisabeth",
                 Firstname = "The Sleeping Panda",
@@ -100,47 +109,47 @@ namespace ORM.ConsoleApp
             student = _dbContext.Add(student);
 
             course.Students.Add(student);
-            
-             student = new Students()
+
+            student = new Students
             {
                 Name = "Samuel",
                 Firstname = "The Flying Fish",
                 Grade = 1
             };
 
-             student = _dbContext.Add(student);
-             
-             course.Students.Add(student);
+            student = _dbContext.Add(student);
 
-             course = _dbContext.Add(course);
-             course = _dbContext.Add(course);
-             course = _dbContext.Get<Courses>(course.Id);
-             
-             Console.WriteLine($"Course : {course.Name} has following Students:");
-             
-             foreach (Students students in course.Students)
-             {
-                 Console.WriteLine($"Student: {students.Firstname} {students.Name}");
-             }
+            course.Students.Add(student);
 
+            course = _dbContext.Add(course);
+            course = _dbContext.Add(course);
+            course = _dbContext.Get<Courses>(course.Id);
+
+            Console.WriteLine($"Course : {course.Name} has following Students:");
+
+            foreach (Students students in course.Students)
+                Console.WriteLine($"Student: {students.Firstname} {students.Name}");
         }
-
-        public void ShowLazyList()
-        {
-        }
-
         public void ShowCaching()
         {
+            Students student1 = _dbContext.Get<Students>(1);
+            Students student2 = _dbContext.Get<Students>(1);
+
+            DbContext dbcontext = new DbContext(_databaseWrapper, null);
+            Students student3 = dbcontext.Get<Students>(1);
+            Students student4 = dbcontext.Get<Students>(1);
+
+
+            Console.WriteLine($"With Cache: {student1 == student2}");
+            Console.WriteLine($"Without Cache: {student3 == student4}");
         }
 
         public void ShowQuery()
         {
-            var x = FluentApi.Get().Like("name", "li").Execute<Students>(_dbContext);
+            IReadOnlyCollection<Students> x = FluentApi.Get().Like("name", "li").Execute<Students>(_dbContext);
 
             foreach (Students students in x)
-            {
                 Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
-            }
         }
     }
-} 
+}
