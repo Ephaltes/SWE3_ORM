@@ -1,17 +1,21 @@
 using System;
 using System.Linq;
+using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
+using Serilog;
 
 namespace ORM.Cache.Test;
 
 public class CacheBehaviour
 {
     private Cache _cache;
+    private ILogger _logger;
     [SetUp]
     public void Setup()
     {
-        _cache = new Cache();
+        _logger = A.Fake<ILogger>();
+        _cache = new Cache(_logger);
     }
 
     [Test]

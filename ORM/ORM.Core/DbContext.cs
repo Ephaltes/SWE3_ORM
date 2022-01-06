@@ -4,6 +4,7 @@ using ORM.Core.Interfaces;
 using ORM.Core.Models;
 using ORM.PostgresSQL.Interface;
 using ORM.PostgresSQL.Model;
+using Serilog;
 
 namespace ORM.Core
 {
@@ -11,17 +12,20 @@ namespace ORM.Core
     {
         private readonly ICache _cache;
         private readonly IDatabaseWrapper _db;
+        private readonly ILogger _logger;
 
-        public DbContext(IDatabaseWrapper db, ICache cache)
+        public DbContext(IDatabaseWrapper db, ICache cache, ILogger logger)
         {
             _db = db;
             _cache = cache;
+            _logger = logger;
         }
 
         /// <inheritdoc />
 
         public T Add<T>(T entity) where T : class, new()
         {
+            _logger.Information($"adding Entity {typeof(T).FullName}");
             if (_cache is not null && !_cache.HasChanged(entity)) return entity;
 
             TableModel table = new TableModel(typeof(T));
@@ -33,6 +37,7 @@ namespace ORM.Core
             foreach (ColumnModel foreignKey in table.ForeignKeys
                          .Where(x => x.IsManyToMany == false && x.IsReferenced == false))
             {
+                _logger.Information("Entity has 1:1 foreignKey");
                 dynamic? value = foreignKey.GetValue(entity);
                 if (value is not null && value.GetType() == foreignKey.Type)
                     columnValues.Add(foreignKey.ForeignKeyColumnName, value.Id);
@@ -50,6 +55,7 @@ namespace ORM.Core
             foreach (ColumnModel foreignKey in table.ForeignKeys
                          .Where(x => x.IsManyToMany))
             {
+                _logger.Information("Entity has ManyToMany foreignKey");
                 dynamic? value = foreignKey.GetValue(entity);
 
                 if (value is null || value.Count <= 0 || value.GetType() != foreignKey.Type)
@@ -69,7 +75,7 @@ namespace ORM.Core
 
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
             _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
-
+            _logger.Information($"Added Entity {typeof(T).FullName} successfully");
             return insertedEntity;
         }
 
@@ -77,6 +83,7 @@ namespace ORM.Core
 
         public T Update<T>(T entity) where T : class, new()
         {
+            _logger.Information($"Updating Entity {typeof(T).FullName}");
             TableModel table = new TableModel(typeof(T));
             List<ColumnModel> columns = table.Columns;
             Dictionary<string, object> columnValues =
@@ -87,12 +94,14 @@ namespace ORM.Core
 
             DataTable result = _db.Update(table.Name, columnValues, expression);
 
+            _logger.Information($"Updating Entity {typeof(T).FullName} successfully");
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
         /// <inheritdoc />
 
         public T Get<T>(object id) where T : class, new()
         {
+            _logger.Information($"Get Entity {typeof(T).FullName}");
             TableModel table = new TableModel(typeof(T));
             IDictionary<Type, Dictionary<int, object>>? localCache = null;
 
@@ -101,6 +110,7 @@ namespace ORM.Core
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
+            _logger.Information($"Getting Entity {typeof(T).FullName} successfully");
             return (T)CreateObject(typeof(T), result.Rows[0], localCache);
         }
 
@@ -108,24 +118,28 @@ namespace ORM.Core
 
         public IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new()
         {
+            _logger.Information($"Getting Entity List of {typeof(T).FullName}");
             IDictionary<Type, Dictionary<int, object>>? localCache = null;
 
             TableModel table = new TableModel(typeof(T));
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
+            _logger.Information($"Getting Entity List of {typeof(T).FullName} successfully");
             return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row, localCache)).ToList();
         }
         /// <inheritdoc />
 
         public void Delete<T>(object id) where T : class, new()
         {
+            _logger.Information($"Delete Object of Entity {typeof(T).FullName}");
             TableModel table = new TableModel(typeof(T));
 
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
             _db.Delete(table.Name, expression);
+            _logger.Information($"Deleting Entity {typeof(T).FullName} successfully");
         }
 
         internal object? Get(object? id, Type type, IDictionary<Type, Dictionary<int, object>>? localCache = null,
@@ -133,6 +147,8 @@ namespace ORM.Core
         {
             if (id is null or DBNull)
                 return null;
+
+            _logger.Information($"Get Entity {type.FullName} with id {id} force update {forceUpdate}");
 
             TableModel table = new TableModel(type);
 
@@ -146,16 +162,24 @@ namespace ORM.Core
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
+            _logger.Information($"Get Entity {type.FullName} with id {id} force update {forceUpdate} successfully");
+            
             return CreateObject(type, result.Rows[0], localCache);
         }
 
         private object? CreateObject(Type type, DataRow row, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
+
             TableModel table = new TableModel(type);
-            object? instance = SearchCaches(type, Convert.ToInt32(row[table.PrimaryKey.ColumnName]), localCache);
+            int id = Convert.ToInt32(row[table.PrimaryKey.ColumnName]);
+            
+            _logger.Information($"Create Object for Entity {type.FullName} with id {id}");
+
+            object? instance = SearchCaches(type, id , localCache);
 
             if (instance is null)
             {
+                _logger.Information($"Entity {type.FullName} with id {id} not found in cache");
                 instance = Activator.CreateInstance(type);
 
                 localCache ??= new Dictionary<Type, Dictionary<int, object>>();
@@ -163,7 +187,6 @@ namespace ORM.Core
                 if (!localCache.ContainsKey(type))
                     localCache.Add(type, new Dictionary<int, object>());
 
-                int id = Convert.ToInt32(row[table.PrimaryKey.ColumnName]);
                 localCache[type][id] = instance;
             }
 
@@ -174,6 +197,8 @@ namespace ORM.Core
             {
                 if (foreignKeyColumn.IsReferenced)
                 {
+                    _logger.Information($"Entity {type.FullName} with id {id} has 1:n foreignKey");
+
                     // 1 : n foreign key
                     IList list = GetList(foreignKeyColumn, row, localCache);
 
@@ -184,6 +209,8 @@ namespace ORM.Core
 
                 if (foreignKeyColumn.IsManyToMany)
                 {
+                    _logger.Information($"Entity {type.FullName} with id {id} has m:n foreignKey");
+
                     IList list = GetList(foreignKeyColumn, row, localCache);
                     foreignKeyColumn.SetValue(instance, list);
 
@@ -191,6 +218,8 @@ namespace ORM.Core
                 }
 
                 //1 : 1 foreign Key
+                _logger.Information($"Entity {type.FullName} with id {id} has 1:1 foreignkey");
+
                 object foreignKeyValue = row[foreignKeyColumn.ForeignKeyColumnName];
                 object? foreignKeyObject = Get(foreignKeyValue, foreignKeyColumn.Type, localCache);
 
@@ -198,12 +227,17 @@ namespace ORM.Core
             }
 
             if (_cache is not null)
-                _cache.Add(instance, Convert.ToInt32(row[table.PrimaryKey.ColumnName]));
+            {
+                _logger.Information($"Entity {type.FullName} with id {id} added to cache");
+                _cache.Add(instance, id);
+            }
+                
 
             return instance;
         }
         private object? SearchCaches(Type type, int id, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
+         
             if (_cache is not null && _cache.Contains(type, id))
                 return _cache.Get(type, id);
 

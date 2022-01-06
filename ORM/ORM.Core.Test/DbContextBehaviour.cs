@@ -8,6 +8,7 @@ using NUnit.Framework;
 using ORM.Core.Interfaces;
 using ORM.Core.Test.Entities;
 using ORM.PostgresSQL.Interface;
+using Serilog;
 
 namespace ORM.Core.Test;
 
@@ -16,12 +17,14 @@ public class DbContextBehaviour
     private IDbContext _dbContext;
     private ICache _cache;
     private IDatabaseWrapper _databaseWrapper;
+    private ILogger _logger;
     [SetUp]
     public void Setup()
     {
         _databaseWrapper = A.Fake<IDatabaseWrapper>();
         _cache = A.Fake<ICache>();
-        _dbContext = new DbContext(_databaseWrapper, _cache);
+        _logger = A.Fake<ILogger>();
+        _dbContext = new DbContext(_databaseWrapper, _cache,_logger);
     }
 
     [Test]

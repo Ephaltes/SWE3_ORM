@@ -1,28 +1,35 @@
-﻿using ORM.Cache;
+﻿using System.Diagnostics.CodeAnalysis;
+using ORM.Cache;
 using ORM.ConsoleApp.Entities;
 using ORM.Core;
 using ORM.Core.FluentApi;
 using ORM.Core.Models;
 using ORM.PostgresSQL;
 using ORM.PostgresSQL.Interface;
+using Serilog;
 
 namespace ORM.ConsoleApp
 {
     /// <summary>
     ///     Class with examples to show how the orm is working
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class Examples
     {
         private readonly IDatabaseWrapper _databaseWrapper;
         private readonly DbContext _dbContext;
+        private readonly ILogger _logger;
         public Examples()
         {
             _databaseWrapper =
                 new PostgresDb("Server=127.0.0.1;Port=5432;Database=orm;User Id=orm_user;Password=orm_password;");
 
-            TrackingCache cache = new TrackingCache();
-
-            _dbContext = new DbContext(_databaseWrapper, cache);
+            _logger = new LoggerConfiguration().WriteTo.Debug().MinimumLevel.Debug().CreateLogger();
+            Log.Logger = _logger;
+            
+            TrackingCache cache = new TrackingCache(_logger);
+            
+            _dbContext = new DbContext(_databaseWrapper, cache,_logger);
         }
         public void DisplayTables()
         {
@@ -135,7 +142,7 @@ namespace ORM.ConsoleApp
             Students student1 = _dbContext.Get<Students>(1);
             Students student2 = _dbContext.Get<Students>(1);
 
-            DbContext dbcontext = new DbContext(_databaseWrapper, null);
+            DbContext dbcontext = new DbContext(_databaseWrapper, null,_logger);
             Students student3 = dbcontext.Get<Students>(1);
             Students student4 = dbcontext.Get<Students>(1);
 

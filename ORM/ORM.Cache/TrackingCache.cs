@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ORM.Core.Interfaces;
 using ORM.Core.Models;
+using Serilog;
 
 namespace ORM.Cache;
 
@@ -39,6 +40,8 @@ public class TrackingCache : Cache
     /// <returns></returns>
     protected virtual string GenerateHash(object obj)
     {
+        _logger.Debug($"Generating hash for object");
+
         TableModel tableModel = new TableModel(obj.GetType());
         string rval = "";
 
@@ -59,7 +62,18 @@ public class TrackingCache : Cache
             }
         }
 
-        return Encoding.UTF8.GetString(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rval)));
+        StringBuilder sb = new StringBuilder();
+        byte[] hashBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rval));
+
+        foreach (byte hashByte in hashBytes)
+        {
+            sb.Append(hashByte.ToString("x2"));
+        }
+
+        string hash = sb.ToString();
+
+        _logger.Debug($"Hash is {hash}");
+        return hash;
     }
 
     /// <inheritdoc/>
@@ -92,5 +106,8 @@ public class TrackingCache : Cache
 
         return true;
     }
-    
+
+    public TrackingCache(ILogger logger) : base(logger)
+    {
+    }
 }

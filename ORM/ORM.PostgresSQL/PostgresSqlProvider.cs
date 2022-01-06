@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using ORM.PostgresSQL.Model;
+using Serilog;
 
 namespace ORM.PostgresSQL
 {
@@ -7,6 +8,7 @@ namespace ORM.PostgresSQL
     public static class PostgresSqlProvider
     {
         internal static string TimestampFormat = "yyyy-MM-dd hh:mm:ss";
+        private static readonly ILogger _logger = Log.ForContext(typeof(PostgresSqlProvider));
         /// <summary>
         ///     Query to get Table Names
         /// </summary>
@@ -136,6 +138,7 @@ namespace ORM.PostgresSQL
                     query += "LIMIT " + maxResults;
             }
 
+            _logger.Debug($"Select Query: {query}");
             return query;
         }
         private static string BuildOrderByClause(DatabaseResultOrder[] resultOrder)
@@ -614,6 +617,7 @@ namespace ORM.PostgresSQL
                 "(" + values + ") " +
                 "RETURNING *;";
 
+            _logger.Debug($"insert Query: {ret}");
             return ret;
         }
         /// <summary>
@@ -632,6 +636,7 @@ namespace ORM.PostgresSQL
             if (filter != null) ret += "WHERE " + ExpressionToWhereClause(filter) + " ";
             ret += "RETURNING *";
 
+            _logger.Debug($"update Query: {ret}");
             return ret;
         }
         /// <summary>
@@ -647,6 +652,7 @@ namespace ORM.PostgresSQL
 
             if (filter != null) ret += "WHERE " + ExpressionToWhereClause(filter) + " ";
 
+            _logger.Debug($"delete Query: {ret}");
             return ret;
         }
     }

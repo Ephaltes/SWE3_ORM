@@ -1,8 +1,9 @@
-﻿using ORM.Core.Attributes;
+﻿using System.Diagnostics.CodeAnalysis;
+using ORM.Core.Attributes;
 
 namespace ORM.ConsoleApp.Entities
 {
-    
+    [ExcludeFromCodeCoverage]
     public class Classes
     {
         [PrimaryKey]

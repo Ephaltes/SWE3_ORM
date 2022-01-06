@@ -1,10 +1,12 @@
-﻿using ORM.Cache;
+﻿using System.Diagnostics.CodeAnalysis;
+using ORM.Cache;
 using ORM.Core;
 using ORM.PostgresSQL;
 using ORM.PostgresSQL.Interface;
 
 namespace ORM.ConsoleApp
 {
+    [ExcludeFromCodeCoverage]
     internal class Program
     {
         private static void Main(string[] args)

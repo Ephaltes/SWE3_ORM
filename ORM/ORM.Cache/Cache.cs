@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using ORM.Core.Interfaces;
+using Serilog;
 
 namespace ORM.Cache
 {
@@ -13,6 +14,12 @@ namespace ORM.Cache
         protected readonly Dictionary<Type, Dictionary<int, object>> _cache =
             new Dictionary<Type, Dictionary<int, object>>();
 
+        protected readonly ILogger _logger;
+        public Cache(ILogger logger)
+        {
+            _logger = logger;
+        }
+
         /// <summary>
         /// Adds an object with an Id to the cache
         /// </summary>
@@ -21,6 +28,7 @@ namespace ORM.Cache
         public virtual void Add(object entity, int id)
         {
             Type type = entity.GetType();
+            _logger.Debug($"Adding/Updating Type {type.FullName} with Id {id} to cache");
             if (!_cache.ContainsKey(type))
                 _cache.Add(type, new Dictionary<int, object>());
             _cache[type][id] = entity;
@@ -32,6 +40,7 @@ namespace ORM.Cache
         /// <param name="id">id of the object to be replaced</param>
         public virtual void Update(object entity, int id)
         {
+            _logger.Debug($"Updating Object with Id {id} to cache");
             Add(entity, id);
         }
         /// <summary>
@@ -42,6 +51,8 @@ namespace ORM.Cache
         {
             Type type = entity.GetType();
             int id = GetId(entity);
+            _logger.Debug($"Removing Type {type.FullName} with Id {id} from cache");
+            
             if (_cache.ContainsKey(type))
                 _cache[type].Remove(id);
         }
@@ -52,6 +63,7 @@ namespace ORM.Cache
         /// <param name="id">id of the object to be removed, Id and type has to match to be removed</param>
         public virtual void Remove(Type type, int id)
         {
+            _logger.Debug($"Removing Type {type.FullName} with Id {id} from cache");
             if (_cache.ContainsKey(type))
                 _cache[type].Remove(id);
         }
@@ -62,6 +74,8 @@ namespace ORM.Cache
         /// <param name="type">type to be removed</param>
         public virtual void Remove(Type type)
         {
+            _logger.Debug($"Removing Type {type.FullName} from cache");
+
             _cache.Remove(type);
         }
 
@@ -73,6 +87,9 @@ namespace ORM.Cache
         /// <returns>An object of type with Id</returns>
         public virtual object? Get(Type type, int id)
         {
+            _logger.Debug($"Trying to Get Type {type.FullName} with Id {id} from cache");
+
+            
             if (!_cache.ContainsKey(type))
                 return null;
 
@@ -86,6 +103,9 @@ namespace ORM.Cache
         /// <returns>returns a list of objects from type</returns>
         public virtual IEnumerable<object> GetAll(Type type)
         {
+            _logger.Debug($"Get all Type {type.FullName} from cache");
+
+            
             if (_cache.ContainsKey(type))
                 return _cache[type].Values;
 
@@ -100,6 +120,7 @@ namespace ORM.Cache
 
         public virtual bool Contains(Type type, int id)
         {
+            _logger.Debug($"Check if Type {type.FullName} with Id {id} in cache");
             return _cache.ContainsKey(type) && _cache[type].ContainsKey(id);
         }
 
@@ -110,6 +131,7 @@ namespace ORM.Cache
         /// <returns>whether the type is in the cache or not</returns>
         public virtual bool Contains(Type type)
         {
+            _logger.Debug($"Check if Type {type.FullName} in cache");
             return _cache.ContainsKey(type);
         }
         /// <summary>
