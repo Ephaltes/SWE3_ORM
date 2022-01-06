@@ -22,6 +22,7 @@ namespace ORM.ConsoleApp
             example.ShowEntityWithManyToManyRelation();
             example.ShowCaching();
             example.ShowQuery();
+            example.UpdateNToMObject();
         }
     }
 }

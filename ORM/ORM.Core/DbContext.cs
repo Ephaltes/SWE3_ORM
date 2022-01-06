@@ -76,6 +76,7 @@ namespace ORM.Core
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
             _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
             _logger.Information($"Added Entity {typeof(T).FullName} successfully");
+            entity = insertedEntity; // so that the entity is updated with the new id
             return insertedEntity;
         }
 
@@ -91,8 +92,45 @@ namespace ORM.Core
 
             CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 table.PrimaryKey.GetValue(entity));
-
+            
+            foreach (ColumnModel foreignKey in table.ForeignKeys
+                         .Where(x => x.IsManyToMany == false && x.IsReferenced == false))
+            {
+                _logger.Information("Updating Entity has 1:1 foreignKey");
+                dynamic? value = foreignKey.GetValue(entity);
+                if (value is not null && value.GetType() == foreignKey.Type)
+                    columnValues.Add(foreignKey.ForeignKeyColumnName, value.Id);
+            }
+            
             DataTable result = _db.Update(table.Name, columnValues, expression);
+            
+            //Updating n:m
+            foreach (ColumnModel foreignKey in table.ForeignKeys
+                         .Where(x => x.IsManyToMany))
+            {
+                _logger.Information("Updating Entity has ManyToMany foreignKey");
+                
+                expression = new CustomExpression(foreignKey.ColumnName, CustomOperations.Equals,
+                    table.PrimaryKey.GetValue(entity));
+                
+                _db.Delete(foreignKey.ForeignKeyTableName,expression);
+                
+                dynamic? value = foreignKey.GetValue(entity);
+
+                if (value is null || value.Count <= 0 || value.GetType() != foreignKey.Type)
+                    continue;
+                
+                foreach (dynamic? item in value)
+                {
+                    _db.Insert(foreignKey.ForeignKeyTableName, new Dictionary<string, object>
+                    {
+                        { foreignKey.ColumnName, table.PrimaryKey.GetValue(entity) },
+                        { foreignKey.ForeignKeyColumnName, item.Id }
+                    });
+                    dynamic? updatedReference = Get(item.Id, foreignKey.Type.GenericTypeArguments.First(), null, true);
+                    _cache?.Update(updatedReference, item.Id);
+                }
+            }
 
             _logger.Information($"Updating Entity {typeof(T).FullName} successfully");
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);

@@ -158,5 +158,41 @@ namespace ORM.ConsoleApp
             foreach (Students students in x)
                 Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
         }
+        
+        public void UpdateNToMObject()
+        {
+            Students student = _dbContext.Get<Students>(1);
+            
+            Console.WriteLine($"Student: {student.Firstname} {student.Name}");
+            Console.WriteLine($"Class {student.Class?.Name}");
+            foreach (Courses studentCourse in student.Courses)
+            {
+                Console.WriteLine($"Course: {studentCourse.Name}");
+            }
+
+            student.Courses.Remove(student.Courses.FirstOrDefault());
+
+            student = _dbContext.Update(student);
+            
+            foreach (Courses studentCourse in student.Courses)
+            {
+                Console.WriteLine($"Course: {studentCourse.Name}");
+            }
+
+            var course = _dbContext.Get<Courses>(1);
+            Classes classes = _dbContext.Get<Classes>(1);
+            
+            student.Courses.Add(course);
+            student.Class = classes;
+
+            student = _dbContext.Update(student);
+            
+            foreach (Courses studentCourse in student.Courses)
+            {
+                Console.WriteLine($"Course: {studentCourse.Name}");
+            }
+            Console.WriteLine($"Class {student.Class.Name}");
+
+        }
     }
 }
