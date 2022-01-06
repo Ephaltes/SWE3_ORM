@@ -4,7 +4,6 @@ using Serilog;
 
 namespace ORM.PostgresSQL
 {
-    [ExcludeFromCodeCoverage]
     public static class PostgresSqlProvider
     {
         internal static string TimestampFormat = "yyyy-MM-dd hh:mm:ss";
@@ -88,7 +87,7 @@ namespace ORM.PostgresSQL
         /// <param name="resultOrder">ASC or DESC</param>
         /// <returns></returns>
         public static string SelectQuery(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
-            CustomExpression filter, DatabaseResultOrder[] resultOrder)
+            CustomExpression? filter, DatabaseResultOrder[] resultOrder)
         {
             string query = "";
             string whereClause = "";
@@ -164,7 +163,7 @@ namespace ORM.PostgresSQL
 
             return ret;
         }
-        private static string ExpressionToWhereClause(CustomExpression filter)
+        private static string ExpressionToWhereClause(CustomExpression? filter)
         {
             if (filter == null) return null;
 
@@ -610,13 +609,7 @@ namespace ORM.PostgresSQL
         /// <returns>insert statement</returns>
         public static string InsertQuery(string tableName, string keys, string values)
         {
-            string ret =
-                "INSERT INTO " + tableName + " " +
-                "(" + keys + ") " +
-                "VALUES " +
-                "(" + values + ") " +
-                "RETURNING *;";
-
+            string ret = $"INSERT INTO {tableName} ( {keys} ) VALUES ( {values} ) RETURNING *;";
             _logger.Debug($"insert Query: {ret}");
             return ret;
         }
@@ -627,14 +620,14 @@ namespace ORM.PostgresSQL
         /// <param name="keyValueClause">fields to update</param>
         /// <param name="filter">where clause</param>
         /// <returns>update statement</returns>
-        public static string UpdateQuery(string tableName, string keyValueClause, CustomExpression filter)
+        public static string UpdateQuery(string tableName, string keyValueClause, CustomExpression? filter)
         {
-            string ret =
-                "UPDATE " + tableName + " SET " +
-                keyValueClause + " ";
-
-            if (filter != null) ret += "WHERE " + ExpressionToWhereClause(filter) + " ";
-            ret += "RETURNING *";
+            string ret;
+            
+            if(filter is not null)
+                ret = $"UPDATE {tableName} SET {keyValueClause} WHERE {ExpressionToWhereClause(filter)} RETURNING *;";
+            else
+                ret = $"UPDATE {tableName} SET {keyValueClause} RETURNING *;";
 
             _logger.Debug($"update Query: {ret}");
             return ret;
@@ -645,13 +638,15 @@ namespace ORM.PostgresSQL
         /// <param name="tableName">table to delete from</param>
         /// <param name="filter">where clause</param>
         /// <returns>delete statement</returns>
-        public static string DeleteQuery(string tableName, CustomExpression filter)
+        public static string DeleteQuery(string tableName, CustomExpression? filter)
         {
-            string ret =
-                "DELETE FROM " + tableName + " ";
-
-            if (filter != null) ret += "WHERE " + ExpressionToWhereClause(filter) + " ";
-
+            string ret;
+            
+            if(filter is not null)
+                ret = $"DELETE FROM {tableName} WHERE {ExpressionToWhereClause(filter)};";
+            else
+                ret = $"DELETE FROM {tableName};";
+            
             _logger.Debug($"delete Query: {ret}");
             return ret;
         }

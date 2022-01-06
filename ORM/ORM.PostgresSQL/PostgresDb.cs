@@ -6,6 +6,9 @@ using ORM.PostgresSQL.Model;
 
 namespace ORM.PostgresSQL
 {
+    /// <summary>
+    /// Excluded from code coverage because it is a wrapper for NpgsqlConnection.
+    /// </summary>
     [ExcludeFromCodeCoverage]
     public class PostgresDb : IDatabaseWrapper
     {
@@ -33,7 +36,7 @@ namespace ORM.PostgresSQL
         }
         /// <inheritdoc />
         public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
-            CustomExpression filter)
+            CustomExpression? filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
 
@@ -86,7 +89,7 @@ namespace ORM.PostgresSQL
             return Query(PostgresSqlProvider.InsertQuery(tableName, keys, values));
         }
         /// <inheritdoc />
-        public DataTable Update(string tableName, Dictionary<string, object> keyValuePairs, CustomExpression filter)
+        public DataTable Update(string tableName, Dictionary<string, object> keyValuePairs, CustomExpression? filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
             if (keyValuePairs == null || keyValuePairs.Count < 1)
@@ -124,7 +127,7 @@ namespace ORM.PostgresSQL
             return Query(PostgresSqlProvider.UpdateQuery(tableName, keyValueClause, filter));
         }
         /// <inheritdoc />
-        public void Delete(string tableName, CustomExpression filter)
+        public void Delete(string tableName, CustomExpression? filter)
         {
             if (string.IsNullOrEmpty(tableName)) throw new ArgumentNullException(nameof(tableName));
             if (filter == null) throw new ArgumentNullException(nameof(filter));

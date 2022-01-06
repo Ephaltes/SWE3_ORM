@@ -170,6 +170,7 @@ namespace ORM.ConsoleApp
                 Console.WriteLine($"Course: {studentCourse.Name}");
             }
 
+            Console.WriteLine("Now Deleting Course");
             student.Courses.Remove(student.Courses.FirstOrDefault());
 
             student = _dbContext.Update(student);
@@ -179,6 +180,7 @@ namespace ORM.ConsoleApp
                 Console.WriteLine($"Course: {studentCourse.Name}");
             }
 
+            Console.WriteLine("Now adding Course");
             var course = _dbContext.Get<Courses>(1);
             Classes classes = _dbContext.Get<Classes>(1);
             
@@ -193,6 +195,11 @@ namespace ORM.ConsoleApp
             }
             Console.WriteLine($"Class {student.Class.Name}");
 
+        }
+
+        public void Test()
+        {
+            var result = FluentApi.Get().Execute<Students>(_dbContext);
         }
     }
 }

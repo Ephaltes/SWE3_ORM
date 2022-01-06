@@ -21,7 +21,7 @@ namespace ORM.PostgresSQL.Interface
         /// <param name="filter">Where clause</param>
         /// <returns></returns>
         public DataTable Select(string tableName, int? indexStart, int? maxResults, List<string>? returnFields,
-            CustomExpression filter);
+            CustomExpression? filter);
 
         /// <summary>
         ///     Inserts a row into a table
@@ -38,14 +38,14 @@ namespace ORM.PostgresSQL.Interface
         /// <param name="keyValuePairs">Key Value Pairs to insert</param>
         /// <param name="filter">Where clause</param>
         /// <returns>Updated object</returns>
-        public DataTable Update(string tableName, Dictionary<string, object> keyValuePairs, CustomExpression filter);
+        public DataTable Update(string tableName, Dictionary<string, object> keyValuePairs, CustomExpression? filter);
 
         /// <summary>
         ///     Deletes an item from a table
         /// </summary>
         /// <param name="tableName">table to delete from</param>
         /// <param name="filter">where clause</param>
-        public void Delete(string tableName, CustomExpression filter);
+        public void Delete(string tableName, CustomExpression? filter);
         /// <summary>
         ///     Custom Sql Query
         /// </summary>

@@ -31,7 +31,8 @@ public interface IDbContext
     /// <param name="expression">Filter</param>
     /// <typeparam name="T">Type of list to get</typeparam>
     /// <returns>Returns a list of entities of type T</returns>
-    IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new();
+    IReadOnlyCollection<T> GetAll<T>(CustomExpression? expression) where T : class, new();
+    
     /// <summary>
     ///     Deletes an object in the database
     /// </summary>

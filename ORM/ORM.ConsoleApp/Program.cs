@@ -6,13 +6,16 @@ using ORM.PostgresSQL.Interface;
 
 namespace ORM.ConsoleApp
 {
+    /// <summary>
+    /// Whole ORM.ConsoleApp is excluded from Code Coverage
+    /// </summary>
     [ExcludeFromCodeCoverage]
     internal class Program
     {
         private static void Main(string[] args)
         {
             Examples example = new Examples();
-
+            
             Console.WriteLine("Hello World!");
             example.DisplayTables();
             example.InsertObject();
@@ -23,6 +26,7 @@ namespace ORM.ConsoleApp
             example.ShowCaching();
             example.ShowQuery();
             example.UpdateNToMObject();
+            example.Test();
         }
     }
 }

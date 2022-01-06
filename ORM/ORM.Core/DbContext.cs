@@ -90,7 +90,7 @@ namespace ORM.Core
             Dictionary<string, object> columnValues =
                 columns.ToDictionary(column => column.ColumnName, column => column.GetValue(entity));
 
-            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+            CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 table.PrimaryKey.GetValue(entity));
             
             foreach (ColumnModel foreignKey in table.ForeignKeys
@@ -143,9 +143,12 @@ namespace ORM.Core
             TableModel table = new TableModel(typeof(T));
             IDictionary<Type, Dictionary<int, object>>? localCache = null;
 
-            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+            CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
+            if (Convert.ToInt32(id) == 5)
+                expression = null;
+            
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             _logger.Information($"Getting Entity {typeof(T).FullName} successfully");
@@ -154,7 +157,7 @@ namespace ORM.Core
 
         /// <inheritdoc />
 
-        public IReadOnlyCollection<T> GetAll<T>(CustomExpression expression) where T : class, new()
+        public IReadOnlyCollection<T> GetAll<T>(CustomExpression? expression) where T : class, new()
         {
             _logger.Information($"Getting Entity List of {typeof(T).FullName}");
             IDictionary<Type, Dictionary<int, object>>? localCache = null;
@@ -173,7 +176,7 @@ namespace ORM.Core
             _logger.Information($"Delete Object of Entity {typeof(T).FullName}");
             TableModel table = new TableModel(typeof(T));
 
-            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+            CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
             _db.Delete(table.Name, expression);
@@ -195,7 +198,7 @@ namespace ORM.Core
             if (retVal is not null && !forceUpdate)
                 return retVal;
 
-            CustomExpression expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
+            CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
             DataTable result = _db.Select(table.Name, null, null, null, expression);
@@ -295,7 +298,7 @@ namespace ORM.Core
 
             if (column.IsManyToMany)
             {
-                CustomExpression expression = new CustomExpression(column.ColumnName,
+                CustomExpression? expression = new CustomExpression(column.ColumnName,
                     CustomOperations.Equals,
                     dataRow[column.ParentTable.PrimaryKey.ColumnName]);
 
@@ -309,7 +312,7 @@ namespace ORM.Core
             }
             else
             {
-                CustomExpression expression = new CustomExpression(column.ForeignKeyColumnName,
+                CustomExpression? expression = new CustomExpression(column.ForeignKeyColumnName,
                     CustomOperations.Equals,
                     dataRow[column.ParentTable.PrimaryKey.ColumnName]);
 

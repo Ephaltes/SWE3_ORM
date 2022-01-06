@@ -3,11 +3,12 @@ using ORM.PostgresSQL.Model;
 
 namespace ORM.Core.FluentApi;
 
-public class FluentApi : IAndOrQuery, IDefaultQueries
+public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
 {
-    public readonly CustomExpression CustomExpression = new CustomExpression();
+    public readonly CustomExpression? CustomExpression = new CustomExpression();
     private bool _isNot;
-    private CustomExpression _tempExpression = new CustomExpression();
+    private CustomExpression _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
+    
     private FluentApi()
     {
         CustomExpression.LeftSide = "1";
@@ -18,7 +19,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueries
     /// <inheritdoc />
     public IDefaultQueries And()
     {
-        _tempExpression = new CustomExpression();
+        _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
         CustomExpression.PrependAnd(_tempExpression);
 
         return this;
@@ -26,7 +27,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueries
     /// <inheritdoc />
     public IDefaultQueries Or()
     {
-        _tempExpression = new CustomExpression();
+        _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
         CustomExpression.PrependOr(_tempExpression);
 
         return this;
@@ -118,7 +119,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueries
     /// EntryPoint for the FluentApi
     /// </summary>
     /// <returns></returns>
-    public static IDefaultQueries Get()
+    public static IDefaultQueriesExtended Get()
     {
         return new FluentApi();
     }
