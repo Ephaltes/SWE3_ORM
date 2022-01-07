@@ -1,15 +1,17 @@
-﻿using ORM.Core.FluentApi.Interfaces;
+﻿using System.Runtime.CompilerServices;
+using ORM.Core.FluentApi.Interfaces;
 using ORM.PostgresSQL.Model;
 
+[assembly:InternalsVisibleTo("ORM.Core.Test")]
 namespace ORM.Core.FluentApi;
 
-public class FluentApi<T> : IAndOrQuery<T>, IDefaultQueriesExtended<T> where T: class ,new()
+internal class FluentApi<T> : IAndOrQuery<T>, IDefaultQueriesExtended<T> where T: class ,new()
 {
     public readonly CustomExpression? CustomExpression = new CustomExpression();
     private bool _isNot;
     private CustomExpression _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
     
-    private FluentApi()
+    internal FluentApi()
     {
         CustomExpression.LeftSide = "1";
         CustomExpression.RightSide = "1";
@@ -115,11 +117,15 @@ public class FluentApi<T> : IAndOrQuery<T>, IDefaultQueriesExtended<T> where T: 
 
         return this;
     }
+}
+
+public class FluentApi
+{
     /// <summary>
     /// EntryPoint for the FluentApi
     /// </summary>
     /// <returns></returns>
-    public static IDefaultQueriesExtended<T> Get()
+    public static IDefaultQueriesExtended<T> Get<T>() where T : class, new()
     {
         return new FluentApi<T>();
     }

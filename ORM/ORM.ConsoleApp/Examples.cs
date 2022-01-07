@@ -153,7 +153,7 @@ namespace ORM.ConsoleApp
 
         public void ShowQuery()
         {
-            IReadOnlyCollection<Students> x = FluentApi<Students>.Get().Like("name", "li").Execute(_dbContext);
+            IReadOnlyCollection<Students> x = FluentApi.Get<Students>().Like("name", "li").Execute(_dbContext);
 
             foreach (Students students in x)
                 Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
@@ -199,7 +199,7 @@ namespace ORM.ConsoleApp
 
         public void Test()
         {
-            var result = FluentApi<Students>.Get().Execute(_dbContext);
+            var result = FluentApi.Get<Students>().Execute(_dbContext);
         }
     }
 }
