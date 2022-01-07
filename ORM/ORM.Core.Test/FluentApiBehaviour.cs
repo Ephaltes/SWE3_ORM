@@ -2,6 +2,7 @@
 using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
+using ORM.Core.Test.Entities;
 using ORM.PostgresSQL;
 using ORM.PostgresSQL.Interface;
 using ORM.PostgresSQL.Model;
@@ -23,7 +24,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object [] fieldValue = { "fieldValue" };
         
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().In(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().In(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -36,7 +37,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().EqualTo(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().EqualTo(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -49,7 +50,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().GreaterThan(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().GreaterThan(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -62,7 +63,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().LessThan(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().LessThan(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -75,7 +76,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().GreaterThanOrEqualTo(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().GreaterThanOrEqualTo(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -88,7 +89,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().LessThanOrEqualTo(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().LessThanOrEqualTo(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -101,7 +102,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().Like(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().Like(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -114,7 +115,7 @@ public class FluentApiBehaviour
         string fieldName = "fieldName";
         object  fieldValue = "fieldValue" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().Not().EqualTo(fieldName, fieldValue);
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().Not().EqualTo(fieldName, fieldValue);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName);
         ((CustomExpression)result.CustomExpression.LeftSide).RightSide.Should().Be(fieldValue);
@@ -129,7 +130,7 @@ public class FluentApiBehaviour
         string fieldName2 = "fieldName2";
         object  fieldValue2 = "fieldValue2" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().EqualTo(fieldName, fieldValue).And()
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().EqualTo(fieldName, fieldValue).And()
             .EqualTo(fieldName2, fieldValue2);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName2);
@@ -145,7 +146,7 @@ public class FluentApiBehaviour
         string fieldName2 = "fieldName2";
         object  fieldValue2 = "fieldValue2" ;
 
-        var result =(FluentApi.FluentApi) FluentApi.FluentApi.Get().EqualTo(fieldName, fieldValue).Or()
+        var result =(FluentApi.FluentApi<Students>) FluentApi.FluentApi<Students>.Get().EqualTo(fieldName, fieldValue).Or()
             .EqualTo(fieldName2, fieldValue2);
         
         ((CustomExpression)result.CustomExpression.LeftSide).LeftSide.Should().Be(fieldName2);

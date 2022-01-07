@@ -3,7 +3,7 @@ using ORM.PostgresSQL.Model;
 
 namespace ORM.Core.FluentApi;
 
-public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
+public class FluentApi<T> : IAndOrQuery<T>, IDefaultQueriesExtended<T> where T: class ,new()
 {
     public readonly CustomExpression? CustomExpression = new CustomExpression();
     private bool _isNot;
@@ -17,7 +17,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         CustomExpression.PrependAnd(_tempExpression);
     }
     /// <inheritdoc />
-    public IDefaultQueries And()
+    public IDefaultQueries<T> And()
     {
         _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
         CustomExpression.PrependAnd(_tempExpression);
@@ -25,7 +25,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IDefaultQueries Or()
+    public IDefaultQueries<T> Or()
     {
         _tempExpression = new CustomExpression("1",CustomOperations.Equals,"1");
         CustomExpression.PrependOr(_tempExpression);
@@ -33,12 +33,12 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IReadOnlyCollection<T> Execute<T>(IDbContext dbContext) where T : class, new()
+    public IReadOnlyCollection<T> Execute(IDbContext dbContext)
     {
         return dbContext.GetAll<T>(CustomExpression);
     }
     /// <inheritdoc />
-    public IAndOrQuery EqualTo(string field, object value)
+    public IAndOrQuery<T> EqualTo(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.NotEquals : CustomOperations.Equals;
         _tempExpression.LeftSide = field;
@@ -49,7 +49,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery GreaterThan(string field, object value)
+    public IAndOrQuery<T> GreaterThan(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.LessThanOrEqualTo : CustomOperations.GreaterThan;
         _tempExpression.LeftSide = field;
@@ -59,7 +59,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery LessThan(string field, object value)
+    public IAndOrQuery<T> LessThan(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.GreaterThanOrEqualTo : CustomOperations.LessThan;
         _tempExpression.LeftSide = field;
@@ -69,7 +69,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery GreaterThanOrEqualTo(string field, object value)
+    public IAndOrQuery<T> GreaterThanOrEqualTo(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.LessThan : CustomOperations.GreaterThanOrEqualTo;
         _tempExpression.LeftSide = field;
@@ -79,7 +79,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery LessThanOrEqualTo(string field, object value)
+    public IAndOrQuery<T> LessThanOrEqualTo(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.GreaterThan : CustomOperations.LessThanOrEqualTo;
         _tempExpression.LeftSide = field;
@@ -89,7 +89,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery Like(string field, object value)
+    public IAndOrQuery<T> Like(string field, object value)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.ContainsNot : CustomOperations.Contains;
         _tempExpression.LeftSide = field;
@@ -99,7 +99,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IAndOrQuery In(string field, object[] values)
+    public IAndOrQuery<T> In(string field, object[] values)
     {
         _tempExpression.Operator = _isNot ? CustomOperations.NotIn : CustomOperations.In;
         _tempExpression.LeftSide = field;
@@ -109,7 +109,7 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
         return this;
     }
     /// <inheritdoc />
-    public IDefaultQueries Not()
+    public IDefaultQueries<T> Not()
     {
         _isNot = true;
 
@@ -119,8 +119,8 @@ public class FluentApi : IAndOrQuery, IDefaultQueriesExtended
     /// EntryPoint for the FluentApi
     /// </summary>
     /// <returns></returns>
-    public static IDefaultQueriesExtended Get()
+    public static IDefaultQueriesExtended<T> Get()
     {
-        return new FluentApi();
+        return new FluentApi<T>();
     }
 }
