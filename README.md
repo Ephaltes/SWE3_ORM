@@ -6,3 +6,5 @@
   - Sollte beim starten der Fehler kommen, das der Datenbank user nicht vorhanden ist oder dass das Passwort falsch ist
   muss das docker-compose down gemacht werden und dann nochmal docker-compose up dann sollte die datenbank funktionieren.
 - Fluentapi kann über FluentApi.Get<T>() aufgerufen werden, am Ende das Execute aufrufen wobei T die Entität ist die man von der Datenbank holen will.
+- Logging wird in die Debug Console rausgeschrieben, dafür muss man das programm als Debug starten, damit man die Debug Console sieht;
+  Es wird nicht in die Standard Console rausgeschrieben, da es sonst zu unleserlich wäre
