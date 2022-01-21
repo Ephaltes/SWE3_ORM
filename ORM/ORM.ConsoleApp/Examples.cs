@@ -33,11 +33,15 @@ namespace ORM.ConsoleApp
         }
         public void DisplayTables()
         {
+            Console.WriteLine("Displaying Tables");
             TableModel table = new TableModel(typeof(Students));
+            Console.WriteLine(table.Name);
+            Console.WriteLine();
         }
 
         public void InsertObject()
         {
+            Console.WriteLine("InsertObject");
             Teachers t = new Teachers
             {
                 Firstname = "Lisi",
@@ -52,10 +56,12 @@ namespace ORM.ConsoleApp
             Teachers t1 = _dbContext.Add(t);
 
             Console.WriteLine($"Id: {t1.Id}, Salary: {t1.Salary}, Firstname: {t1.Firstname}, Name: {t1.Name}");
+            Console.WriteLine();
         }
 
         public void UpdateObject()
         {
+            Console.WriteLine("UpdateObject");
             Teachers t = new Teachers
             {
                 Firstname = "Lisi",
@@ -70,10 +76,12 @@ namespace ORM.ConsoleApp
             Teachers t1 = _dbContext.Update(t);
 
             Console.WriteLine($"Id: {t1.Id}, Salary: {t1.Salary}, Firstname: {t1.Firstname}, Name: {t1.Name}");
+            Console.WriteLine();
         }
 
         public void ShowEntityWithFk()
         {
+            Console.WriteLine("ShowEntityWithFk");
             Teachers teacher = _dbContext.Get<Teachers>(1);
 
             Classes classes = new Classes
@@ -87,20 +95,25 @@ namespace ORM.ConsoleApp
             Classes classes1 = _dbContext.Get<Classes>(1);
 
             Console.WriteLine($"Id: {classes1.Id}, Name: {classes1.Name}, Teacher: {classes1.Teacher.Firstname}");
+            Console.WriteLine();
         }
 
         public void ShowEntityWithFkList()
         {
+            Console.WriteLine("Show 1:n");
             Teachers teacher = _dbContext.Get<Teachers>(1);
 
             Console.WriteLine($"Teacher {teacher.Firstname}");
 
             foreach (Classes classes in teacher.Classes)
                 Console.WriteLine("Classes: " + classes.Name);
+            
+            Console.WriteLine();
         }
 
         public void ShowEntityWithManyToManyRelation()
         {
+            Console.WriteLine("Show M:N Relation");
             Courses course = new Courses
             {
                 Name = "English",
@@ -136,9 +149,13 @@ namespace ORM.ConsoleApp
 
             foreach (Students students in course.Students)
                 Console.WriteLine($"Student: {students.Firstname} {students.Name}");
+            
+            Console.WriteLine();
         }
         public void ShowCaching()
         {
+            Console.WriteLine("Show Caching");
+            
             Students student1 = _dbContext.Get<Students>(1);
             Students student2 = _dbContext.Get<Students>(1);
 
@@ -149,18 +166,27 @@ namespace ORM.ConsoleApp
 
             Console.WriteLine($"With Cache: {student1 == student2}");
             Console.WriteLine($"Without Cache: {student3 == student4}");
+            
+            Console.WriteLine();
         }
 
         public void ShowQuery()
         {
+            Console.WriteLine("Show FluentApi");
+            
+            
             IReadOnlyCollection<Students> x = FluentApi.Get<Students>().Like("name", "li").Execute(_dbContext);
 
             foreach (Students students in x)
                 Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
+            
+            Console.WriteLine();
         }
         
         public void UpdateNToMObject()
         {
+            Console.WriteLine("Update M:N");
+            
             Students student = _dbContext.Get<Students>(1);
             
             Console.WriteLine($"Student: {student.Firstname} {student.Name}");
@@ -175,31 +201,26 @@ namespace ORM.ConsoleApp
 
             student = _dbContext.Update(student);
             
-            foreach (Courses studentCourse in student.Courses)
-            {
-                Console.WriteLine($"Course: {studentCourse.Name}");
-            }
+            Console.WriteLine($"Course Count {student.Courses.Count}");
 
             Console.WriteLine("Now adding Course");
             var course = _dbContext.Get<Courses>(1);
-            Classes classes = _dbContext.Get<Classes>(1);
             
             student.Courses.Add(course);
-            student.Class = classes;
 
             student = _dbContext.Update(student);
             
-            foreach (Courses studentCourse in student.Courses)
-            {
-                Console.WriteLine($"Course: {studentCourse.Name}");
-            }
-            Console.WriteLine($"Class {student.Class.Name}");
+            Console.WriteLine($"Course Count {student.Courses.Count}");
 
+            Console.WriteLine();
         }
 
         public void Test()
         {
+            Console.WriteLine("Custom Test");
             var result = FluentApi.Get<Students>().Execute(_dbContext);
+            
+            Console.WriteLine();
         }
     }
 }
