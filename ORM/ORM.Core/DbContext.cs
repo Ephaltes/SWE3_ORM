@@ -22,10 +22,10 @@ namespace ORM.Core
         }
 
         /// <inheritdoc />
-
         public T Add<T>(T entity) where T : class, new()
         {
             _logger.Information($"adding Entity {typeof(T).FullName}");
+
             if (_cache is not null && !_cache.HasChanged(entity)) return entity;
 
             TableModel table = new TableModel(typeof(T));
@@ -73,9 +73,22 @@ namespace ORM.Core
                 }
             }
 
+            //update references when List
+            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x => x.IsReferenced && !x.IsManyToMany))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+                foreach (dynamic? item in value)
+                    if (item is not null && value.GetType() == foreignKey.Type)
+                    {
+                        dynamic? updatedReference = Get(item.Id, foreignKey.Type.GenericTypeArguments.First(), null,
+                            true);
+                        _cache?.Update(updatedReference, item.Id);
+                    }
+            }
+
             //update references when not List
-            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x=>x.IsReferenced == false 
-                                                                          && !x.IsManyToMany))
+            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x => x.IsReferenced == false
+                                                                            && !x.IsManyToMany))
             {
                 dynamic? value = foreignKey.GetValue(entity);
                 if (value is not null && value.GetType() == foreignKey.Type)
@@ -83,18 +96,17 @@ namespace ORM.Core
                     dynamic? updatedReference = Get(value.Id, foreignKey.Type, null, true);
                     _cache?.Update(updatedReference, value.Id);
                 }
-               
             }
 
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
             _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
             _logger.Information($"Added Entity {typeof(T).FullName} successfully");
             entity = insertedEntity; // so that the entity is updated with the new id
+
             return insertedEntity;
         }
 
         /// <inheritdoc />
-
         public T Update<T>(T entity) where T : class, new()
         {
             _logger.Information($"Updating Entity {typeof(T).FullName}");
@@ -105,7 +117,7 @@ namespace ORM.Core
 
             CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 table.PrimaryKey.GetValue(entity));
-            
+
             foreach (ColumnModel foreignKey in table.ForeignKeys
                          .Where(x => x.IsManyToMany == false && x.IsReferenced == false))
             {
@@ -114,25 +126,25 @@ namespace ORM.Core
                 if (value is not null && value.GetType() == foreignKey.Type)
                     columnValues.Add(foreignKey.ForeignKeyColumnName, value.Id);
             }
-            
+
             DataTable result = _db.Update(table.Name, columnValues, expression);
-            
+
             //Updating n:m
             foreach (ColumnModel foreignKey in table.ForeignKeys
                          .Where(x => x.IsManyToMany))
             {
                 _logger.Information("Updating Entity has ManyToMany foreignKey");
-                
+
                 expression = new CustomExpression(foreignKey.ColumnName, CustomOperations.Equals,
                     table.PrimaryKey.GetValue(entity));
-                
-                _db.Delete(foreignKey.ForeignKeyTableName,expression);
-                
+
+                _db.Delete(foreignKey.ForeignKeyTableName, expression);
+
                 dynamic? value = foreignKey.GetValue(entity);
 
                 if (value is null || value.Count <= 0 || value.GetType() != foreignKey.Type)
                     continue;
-                
+
                 foreach (dynamic? item in value)
                 {
                     _db.Insert(foreignKey.ForeignKeyTableName, new Dictionary<string, object>
@@ -145,11 +157,36 @@ namespace ORM.Core
                 }
             }
 
+            //update references when List
+            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x => x.IsReferenced && !x.IsManyToMany))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+                foreach (dynamic? item in value)
+                    if (item is not null && value.GetType() == foreignKey.Type)
+                    {
+                        dynamic? updatedReference = Get(item.Id, foreignKey.Type.GenericTypeArguments.First(), null,
+                            true);
+                        _cache?.Update(updatedReference, item.Id);
+                    }
+            }
+
+            //update references when not List
+            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x => x.IsReferenced == false
+                                                                            && !x.IsManyToMany))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+                if (value is not null && value.GetType() == foreignKey.Type)
+                {
+                    dynamic? updatedReference = Get(value.Id, foreignKey.Type, null, true);
+                    _cache?.Update(updatedReference, value.Id);
+                }
+            }
+
             _logger.Information($"Updating Entity {typeof(T).FullName} successfully");
+
             return Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
         }
         /// <inheritdoc />
-
         public T Get<T>(object id) where T : class, new()
         {
             _logger.Information($"Get Entity {typeof(T).FullName}");
@@ -161,15 +198,15 @@ namespace ORM.Core
 
             if (Convert.ToInt32(id) == 5)
                 expression = null;
-            
+
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             _logger.Information($"Getting Entity {typeof(T).FullName} successfully");
+
             return (T)CreateObject(typeof(T), result.Rows[0], localCache);
         }
 
         /// <inheritdoc />
-
         public IReadOnlyCollection<T> GetAll<T>(CustomExpression? expression) where T : class, new()
         {
             _logger.Information($"Getting Entity List of {typeof(T).FullName}");
@@ -180,10 +217,10 @@ namespace ORM.Core
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             _logger.Information($"Getting Entity List of {typeof(T).FullName} successfully");
+
             return result.Rows.Cast<DataRow>().Select(row => (T)CreateObject(typeof(T), row, localCache)).ToList();
         }
         /// <inheritdoc />
-
         public void Delete<T>(object id) where T : class, new()
         {
             _logger.Information($"Delete Object of Entity {typeof(T).FullName}");
@@ -217,19 +254,18 @@ namespace ORM.Core
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             _logger.Information($"Get Entity {type.FullName} with id {id} force update {forceUpdate} successfully");
-            
+
             return CreateObject(type, result.Rows[0], localCache);
         }
 
         private object? CreateObject(Type type, DataRow row, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
-
             TableModel table = new TableModel(type);
             int id = Convert.ToInt32(row[table.PrimaryKey.ColumnName]);
-            
+
             _logger.Information($"Create Object for Entity {type.FullName} with id {id}");
 
-            object? instance = SearchCaches(type, id , localCache);
+            object? instance = SearchCaches(type, id, localCache);
 
             if (instance is null)
             {
@@ -285,13 +321,12 @@ namespace ORM.Core
                 _logger.Information($"Entity {type.FullName} with id {id} added to cache");
                 _cache.Add(instance, id);
             }
-                
+
 
             return instance;
         }
         private object? SearchCaches(Type type, int id, IDictionary<Type, Dictionary<int, object>>? localCache)
         {
-         
             if (_cache is not null && _cache.Contains(type, id))
                 return _cache.Get(type, id);
 
@@ -337,6 +372,5 @@ namespace ORM.Core
 
             return list;
         }
-
     }
 }
