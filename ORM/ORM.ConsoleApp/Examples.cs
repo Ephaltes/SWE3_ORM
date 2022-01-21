@@ -181,6 +181,13 @@ namespace ORM.ConsoleApp
             foreach (Students students in x)
                 Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
             
+            
+            Console.WriteLine("Get All Students");
+            x = FluentApi.Get<Students>().Execute(_dbContext);
+
+            foreach (Students students in x)
+                Console.WriteLine($"Id: {students.Id}, Firstname: {students.Firstname}, Name: {students.Name}");
+            
             Console.WriteLine();
         }
         
