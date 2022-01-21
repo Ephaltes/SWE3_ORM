@@ -73,6 +73,19 @@ namespace ORM.Core
                 }
             }
 
+            //update references when not List
+            foreach (ColumnModel foreignKey in table.ForeignKeys.Where(x=>x.IsReferenced == false 
+                                                                          && !x.IsManyToMany))
+            {
+                dynamic? value = foreignKey.GetValue(entity);
+                if (value is not null && value.GetType() == foreignKey.Type)
+                {
+                    dynamic? updatedReference = Get(value.Id, foreignKey.Type, null, true);
+                    _cache?.Update(updatedReference, value.Id);
+                }
+               
+            }
+
             insertedEntity = Get<T>(result.Rows[0][table.PrimaryKey.ColumnName]);
             _cache?.Update(insertedEntity, Convert.ToInt32(result.Rows[0][table.PrimaryKey.ColumnName]));
             _logger.Information($"Added Entity {typeof(T).FullName} successfully");

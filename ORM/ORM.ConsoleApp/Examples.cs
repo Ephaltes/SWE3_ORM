@@ -62,16 +62,8 @@ namespace ORM.ConsoleApp
         public void UpdateObject()
         {
             Console.WriteLine("UpdateObject");
-            Teachers t = new Teachers
-            {
-                Firstname = "Lisi",
-                Id = 1,
-                Name = "Mouse",
-                Gender = Gender.Female,
-                BirthDate = new DateTime(1970, 8, 18),
-                HireDate = new DateTime(2015, 6, 20),
-                Salary = 70000
-            };
+            Teachers t = _dbContext.Get<Teachers>(1);
+            t.Salary = 99000;
 
             Teachers t1 = _dbContext.Update(t);
 
@@ -101,7 +93,16 @@ namespace ORM.ConsoleApp
         public void ShowEntityWithFkList()
         {
             Console.WriteLine("Show 1:n");
+            
             Teachers teacher = _dbContext.Get<Teachers>(1);
+
+            Classes newClass = new Classes
+            {
+                Name = "German",
+                Teacher = teacher
+            };
+
+            _dbContext.Add(newClass);
 
             Console.WriteLine($"Teacher {teacher.Firstname}");
 
