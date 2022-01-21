@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ORM.Cache\ORM.Cache.csproj" />
-        <ProjectReference Include="..\ORM.Configuration\ORM.Configuration.csproj" />
         <ProjectReference Include="..\ORM.Core\ORM.Core.csproj" />
         <ProjectReference Include="..\ORM.PostgresSQL\ORM.PostgresSQL.csproj" />
     </ItemGroup>
