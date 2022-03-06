@@ -196,9 +196,6 @@ namespace ORM.Core
             CustomExpression? expression = new CustomExpression(table.PrimaryKey.ColumnName, CustomOperations.Equals,
                 id);
 
-            if (Convert.ToInt32(id) == 5)
-                expression = null;
-
             DataTable result = _db.Select(table.Name, null, null, null, expression);
 
             _logger.Information($"Getting Entity {typeof(T).FullName} successfully");
